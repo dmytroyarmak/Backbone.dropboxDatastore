@@ -25,7 +25,7 @@ module.exports = function(grunt) {
       options: {
         jshintrc: '.jshintrc',
       },
-      all: ['Gruntfile.js', '<%= pkg.main %>', 'spec/*_spec.js']
+      all: ['Gruntfile.js', '<%= pkg.main %>', 'spec/*Spec.js']
     },
     jasmine: {
       src: '<%= pkg.main %>',
@@ -36,6 +36,12 @@ module.exports = function(grunt) {
         ],
         specs: 'spec/*Spec.js'
       }
+    },
+    watch: {
+      test: {
+        files: ['<%= pkg.main %>', 'spec/*Spec.js'],
+        tasks: ['jasmine']
+      }
     }
   });
 
@@ -43,6 +49,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-contrib-watch');
   // Default task.
   grunt.registerTask('default', ['test', 'uglify']);
   grunt.registerTask('test', ['jshint', 'jasmine']);
