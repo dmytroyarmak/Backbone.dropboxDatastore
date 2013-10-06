@@ -1,9 +1,3 @@
-/**
- * Backbone Dropbox Datastore Adapter
- * Version 0.0.1
- *
- * https://github.com/dmytroyarmak/Backbone.dropboxDatastore
- */
 (function (root, factory) {
   'use strict';
 

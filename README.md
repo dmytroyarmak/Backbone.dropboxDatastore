@@ -79,7 +79,8 @@ You'll need node and to `npm install` before being able to run the minification 
 1. Fork;
 2. Write code, with tests;
 3. `make test` or `open spec/runner.html`;
-4. Create a pull request.
+4. `grunt jshint`
+5. Create a pull request.
 
 Have fun!
 

@@ -1,6 +1,9 @@
 bin = ./node_modules/.bin
 
-test: test-globals-amd test-commonjs
+test: jshint test-globals-amd test-commonjs
+
+jshint:
+	grunt jshint
 
 test-globals-amd:
 	$(bin)/mocha-phantomjs ./spec/runner.html
@@ -16,9 +19,6 @@ clean:
 
 ./spec/dropboxDatastore_commonjs_spec.bundled.js: ./spec/dropboxDatastore_commonjs_spec.js
 	$(bin)/browserify -e $< -o $@
-
-minify:
-	$(bin)/uglifyjs -o backbone.dropboxDatastore-min.js backbone.dropboxDatastore.js
 
 # Get version number from package.json, need this for tagging.
 version = $(shell node -e "console.log(JSON.parse(require('fs').readFileSync('package.json')).version)")
