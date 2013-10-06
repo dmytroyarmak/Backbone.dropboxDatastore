@@ -28,6 +28,7 @@
     this.name = name;
   };
 
+  // Instance methods of DropboxDatastore
   _.extend(Backbone.DropboxDatastore.prototype, {
 
     // Save the current state of the **Store** to *Dropbox Datastore*.
@@ -54,36 +55,76 @@
     destroy: function(model) {
     },
 
-    dropboxDatastore: function() {
-      // TODO: throw exception if doesn't exist
-      return Backbone.DropboxDatastore.datastore;
+    // lazy table getter
+    getTable: function() {
+    }
+  });
+
+  // Static methods of DropboxDatastore
+  _.extend(Backbone.DropboxDatastore, {
+    getDatastore: function(callback) {
+      var onOpenDefaultDatastore;
+
+      if (this._datastore) {
+        // To be consistent to async nature of this method defers invoking
+        // the function using Underscore defer
+        _.defer(callback, this._datastore);
+      } else {
+        // Bind and partial applying _onOpenDefaultDatastore by callback
+        onOpenDefaultDatastore = _.bind(this._onOpenDefaultDatastore, this, callback);
+
+        // we can open only one instance of Datastore simultaneously
+        this.getDatastoreManager().openDefaultDatastore(onOpenDefaultDatastore);
+      }
+    },
+
+    getDatastoreManager: function() {
+      return this.getDropboxClient().getDatastoreManager();
+    },
+
+    getDropboxClient: function() {
+      var client = Backbone.DropboxDatastore.client;
+      if (!client) {
+        throw new Error('Client should be defined for Backbone.DropboxDatastore');
+      }
+      if (!client.isAuthenticated()) {
+        throw new Error('Client should be authenticated for Backbone.DropboxDatastore');
+      }
+      return client;
+    },
+
+    _onOpenDefaultDatastore: function(callback, error, datastore) {
+      if (error) {
+        throw new Error('Error on openDefaultDatastore: ' + error.responseText);
+      }
+      // cache opened datastore
+      this._datastore = datastore;
+      callback(datastore);
     }
   });
 
   // dropboxDatastoreSync delegate to the model or collection's
   // *dropboxDatastore* property, which should be an instance of `Backbone.DropboxDatastore`.
   Backbone.DropboxDatastore.sync = Backbone.dropboxDatastoreSync = function(method, model, options) {
-    var store = model.dropboxDatastore || model.collection.dropboxDatastore;
-
-    var resp, errorMessage, syncDfd = Backbone.$.Deferred && Backbone.$.Deferred(); //If $ is having Deferred - use it.
+    var store = model.dropboxDatastore || model.collection.dropboxDatastore,
+        syncDfd = Backbone.$.Deferred && Backbone.$.Deferred(), //If $ is having Deferred - use it.
+        resp, errorMessage;
 
     try {
-
       switch (method) {
-      case 'read':
-        resp = model.id === void 0 ? store.findAll() : store.find(model);
-        break;
-      case 'create':
-        resp = store.create(model);
-        break;
-      case 'update':
-        resp = store.update(model);
-        break;
-      case 'delete':
-        resp = store.destroy(model);
-        break;
+        case 'read':
+          resp = model.id === void 0 ? store.findAll() : store.find(model);
+          break;
+        case 'create':
+          resp = store.create(model);
+          break;
+        case 'update':
+          resp = store.update(model);
+          break;
+        case 'delete':
+          resp = store.destroy(model);
+          break;
       }
-
     } catch(error) {
       errorMessage = error.message;
     }
@@ -99,7 +140,6 @@
       if (syncDfd) {
         syncDfd.resolve(resp);
       }
-
     } else {
       errorMessage = errorMessage ? errorMessage : 'Record Not Found';
 

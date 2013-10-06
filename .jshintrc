@@ -30,6 +30,8 @@
         "afterEach": false,
         "expect": false,
         "jasmine": false,
-        "spyOn": false
+        "spyOn": false,
+        "runs" : false,
+        "waitsFor": false
     }
 }
