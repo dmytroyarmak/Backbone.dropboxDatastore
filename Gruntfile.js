@@ -18,7 +18,7 @@ module.exports = function(grunt) {
       },
       dist: {
         src: '<%= pkg.main %>',
-        dest: '<%= pkg.name %>.min.js'
+        dest: 'backbone.dropboxDatastore.min.js'
       }
     },
     jshint: {
