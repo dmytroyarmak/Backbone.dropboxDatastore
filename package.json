@@ -22,5 +22,8 @@
   "main": "./backbone.dropboxDatastore.js",
   "engines": {
     "node": "*"
+  },
+  "scripts": {
+    "test": "grunt test"
   }
 }
