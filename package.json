@@ -11,9 +11,6 @@
     "underscore": "~1.4.x"
   },
   "devDependencies": {
-    "uglify-js": "~1.2.6",
-    "mocha-phantomjs": "~1.1.2",
-    "browserify": "~2.x.x",
     "grunt": "~0.4.1",
     "grunt-contrib-uglify": "~0.2.4",
     "grunt-contrib-jshint": "~0.6.4",

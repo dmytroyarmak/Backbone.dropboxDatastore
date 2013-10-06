@@ -76,10 +76,11 @@ Backbone.DropboxDatastore = require("backbone.dropboxdatastore");
 
 You'll need node and to `npm install` before being able to run the minification script.
 
+Also to install dependencies for tests you need to `npm install -g bower` and then `bower install`.
+
 1. Fork;
 2. Write code, with tests;
-3. `make test` or `open spec/runner.html`;
-4. `grunt jshint`
+4. Run tests with `npm test`
 5. Create a pull request.
 
 Have fun!
