@@ -138,7 +138,7 @@
   // Override 'Backbone.sync' to default to dropboxDatastoreSync,
   // the original 'Backbone.sync' is still available in 'Backbone.ajaxSync'
   Backbone.sync = function(method, model, options) {
-    return Backbone.getSyncMethod(model).apply(this, [method, model, options]);
+    return Backbone.getSyncMethod(model).call(this, method, model, options);
   };
 
   return Backbone.DropboxDatastore;

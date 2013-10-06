@@ -7,7 +7,6 @@
     "curly": true,
     "eqeqeq": true,
     "immed": true,
-    "indent": 2,
     "latedef": true,
     "newcap": true,
     "noarg": true,
@@ -27,7 +26,10 @@
         "describe": false,
         "xit": false,
         "it": false,
-        "assert": false,
-        "before": false
+        "beforeEach": false,
+        "afterEach": false,
+        "expect": false,
+        "jasmine": false,
+        "spyOn": false
     }
 }

@@ -2,5 +2,10 @@
   "name": "backbone.dropboxDatastore",
   "version": "0.0.1",
   "main": "./backbone.dropboxDatastore.js",
-  "dependencies": {}
+  "dependencies": {
+    "backbone": "~1.0.0"
+  },
+  "devDependencies": {
+    "underscore": "~1.5.2"
+  }
 }

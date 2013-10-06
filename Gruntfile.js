@@ -1,4 +1,4 @@
-/* jshint camelcase: false */
+/*jshint camelcase: false*/
 /*global module:false*/
 
 module.exports = function(grunt) {
@@ -17,7 +17,7 @@ module.exports = function(grunt) {
         banner: '<%= banner %>'
       },
       dist: {
-        src: '<%= pkg.name %>.js',
+        src: '<%= pkg.main %>',
         dest: '<%= pkg.name %>.min.js'
       }
     },
@@ -26,14 +26,24 @@ module.exports = function(grunt) {
         jshintrc: '.jshintrc',
       },
       all: ['Gruntfile.js', '<%= pkg.main %>', 'spec/*_spec.js']
+    },
+    jasmine: {
+      src: '<%= pkg.main %>',
+      options: {
+        vendor: [
+          'bower_components/underscore/underscore.js',
+          'bower_components/backbone/backbone.js'
+        ],
+        specs: 'spec/*Spec.js'
+      }
     }
   });
 
   // These plugins provide necessary tasks.
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-
+  grunt.loadNpmTasks('grunt-contrib-jasmine');
   // Default task.
-  grunt.registerTask('default', ['jshint', 'uglify']);
-
+  grunt.registerTask('default', ['test', 'uglify']);
+  grunt.registerTask('test', ['jshint', 'jasmine']);
 };
