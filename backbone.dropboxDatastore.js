@@ -56,7 +56,23 @@
     },
 
     // lazy table getter
-    getTable: function() {
+    getTable: function(callback) {
+      var onGetDatastore;
+
+      if (this._table) {
+        // To be consistent to async nature of this method defers invoking
+        // the function using Underscore defer
+        _.defer(callback, this._table);
+      } else {
+        // Bind and partial applying _onGetDatastore by callback
+        onGetDatastore = _.bind(this._onGetDatastore, this, callback);
+        Backbone.DropboxDatastore.getDatastore(onGetDatastore);
+      }
+    },
+
+    _onGetDatastore: function(callback, datastore) {
+      this._table = datastore.getTable(this.name);
+      callback(this._table);
     }
   });
 
@@ -78,6 +94,15 @@
       }
     },
 
+    _onOpenDefaultDatastore: function(callback, error, datastore) {
+      if (error) {
+        throw new Error('Error on openDefaultDatastore: ' + error.responseText);
+      }
+      // cache opened datastore
+      this._datastore = datastore;
+      callback(datastore);
+    },
+
     getDatastoreManager: function() {
       return this.getDropboxClient().getDatastoreManager();
     },
@@ -91,15 +116,6 @@
         throw new Error('Client should be authenticated for Backbone.DropboxDatastore');
       }
       return client;
-    },
-
-    _onOpenDefaultDatastore: function(callback, error, datastore) {
-      if (error) {
-        throw new Error('Error on openDefaultDatastore: ' + error.responseText);
-      }
-      // cache opened datastore
-      this._datastore = datastore;
-      callback(datastore);
     }
   });
 

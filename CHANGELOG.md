@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.1 - Oct 7, 2013
+- add instance method to get table
+
 ## 0.1.0 - Oct 6, 2013
 - add static method to open and get dataset
 
