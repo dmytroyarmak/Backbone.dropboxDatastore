@@ -26,34 +26,34 @@ describe('Backbone.getSyncMethod', function(){
       });
 
   beforeEach(function() {
-    spyOn(Backbone, 'ajaxSync');
-    spyOn(Backbone, 'dropboxDatastoreSync');
+    spyOn(Backbone, 'originalSync');
+    spyOn(Backbone.DropboxDatastore, 'sync');
   });
 
-  it('for model with dropboxDatastore returns dropboxDatastoreSync', function() {
+  it('for model with dropboxDatastore returns DropboxDatastore.sync', function() {
     var model = new DropboxDatastoreModel();
-    expect(Backbone.getSyncMethod(model)).toBe(Backbone.dropboxDatastoreSync);
+    expect(Backbone.getSyncMethod(model)).toBe(Backbone.DropboxDatastore.sync);
   });
 
-  it('for model without dropboxDatastore returns ajaxSync', function() {
+  it('for model without dropboxDatastore returns originalSync', function() {
     var model = new Backbone.Model();
-    expect(Backbone.getSyncMethod(model)).toBe(Backbone.ajaxSync);
+    expect(Backbone.getSyncMethod(model)).toBe(Backbone.originalSync);
   });
 
-  it('for model of collection with dropboxDatastore returns dropboxDatastoreSync', function() {
+  it('for model of collection with dropboxDatastore returns DropboxDatastore.sync', function() {
     var collection = new DropboxDatastoreCollection(),
         model = new Backbone.Model({}, {collection: collection});
-    expect(Backbone.getSyncMethod(model)).toBe(Backbone.dropboxDatastoreSync);
+    expect(Backbone.getSyncMethod(model)).toBe(Backbone.DropboxDatastore.sync);
   });
 
-  it('for collection with dropboxDatastore returns dropboxDatastoreSync', function() {
+  it('for collection with dropboxDatastore returns DropboxDatastore.sync', function() {
     var collection = new DropboxDatastoreCollection();
-    expect(Backbone.getSyncMethod(collection)).toBe(Backbone.dropboxDatastoreSync);
+    expect(Backbone.getSyncMethod(collection)).toBe(Backbone.DropboxDatastore.sync);
   });
 
-  it('for collection without dropboxDatastore returns ajaxSync', function() {
+  it('for collection without dropboxDatastore returns originalSync', function() {
     var collection = new Backbone.Collection();
-    expect(Backbone.getSyncMethod(collection)).toBe(Backbone.ajaxSync);
+    expect(Backbone.getSyncMethod(collection)).toBe(Backbone.originalSync);
   });
 
 });
@@ -135,6 +135,46 @@ describe('Backbone.DropboxDatastore instance methods', function() {
 
   });
 
+  describe('#findAll', function() {
+
+    var tableSpy, callbackSpy, record1Spy, record2Spy, result;
+
+    beforeEach(function() {
+      callbackSpy = jasmine.createSpy('callback');
+
+      record1Spy = jasmine.createSpyObj('record1', ['getFields']);
+      record1Spy.getFields.andReturn('fields1Mock');
+
+      record2Spy = jasmine.createSpyObj('record2', ['getFields']);
+      record2Spy.getFields.andReturn('fields2Mock');
+
+      tableSpy = jasmine.createSpyObj('table', ['query']);
+      tableSpy.query.andReturn([record1Spy, record2Spy]);
+      spyOn(dropboxDatastore, 'getTable');
+
+      result = dropboxDatastore.findAll(callbackSpy);
+
+      // Explicit call callback on success getTable
+      dropboxDatastore.getTable.mostRecentCall.args[0](tableSpy);
+    });
+
+    it('call getTable', function() {
+      expect(dropboxDatastore.getTable).toHaveBeenCalled();
+    });
+
+    it('call query on table', function() {
+      expect(tableSpy.query).toHaveBeenCalled();
+    });
+
+    it('call getFields on each returned records and call callback with array of fields', function() {
+      expect(record1Spy.getFields).toHaveBeenCalled();
+      expect(record2Spy.getFields).toHaveBeenCalled();
+    });
+
+    it('call callback with array of fields', function() {
+      expect(callbackSpy).toHaveBeenCalledWith(['fields1Mock', 'fields2Mock']);
+    });
+  });
 });
 
 describe('Backbone.DropboxDatastore static methods', function() {
@@ -243,6 +283,22 @@ describe('Backbone.DropboxDatastore static methods', function() {
       });
 
     });
+  });
+
+  describe('recordToJson', function() {
+
+    var recordSpy, result;
+
+    beforeEach(function() {
+      recordSpy = jasmine.createSpyObj('record', ['getFields']);
+
+      result = Backbone.DropboxDatastore.recordToJson(recordSpy);
+    });
+
+    it('call getFields of record', function() {
+      expect(recordSpy.getFields).toHaveBeenCalled();
+    });
+
   });
 
 });

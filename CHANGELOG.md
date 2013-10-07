@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.2 - Oct 7, 2013
+- implement fetch for collection
+
 ## 0.1.1 - Oct 7, 2013
 - add instance method to get table
 

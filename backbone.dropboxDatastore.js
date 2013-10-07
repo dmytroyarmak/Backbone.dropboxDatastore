@@ -48,7 +48,11 @@
     },
 
     // Return the array of all models currently in table.
-    findAll: function() {
+    findAll: function(callback) {
+      this.getTable(function(table) {
+        var result = _.map(table.query(), Backbone.DropboxDatastore.recordToJson);
+        callback(result);
+      });
     },
 
     // Delete a model from *Dropbox Datastore*.
@@ -116,36 +120,44 @@
         throw new Error('Client should be authenticated for Backbone.DropboxDatastore');
       }
       return client;
-    }
-  });
+    },
 
-  // dropboxDatastoreSync delegate to the model or collection's
-  // *dropboxDatastore* property, which should be an instance of `Backbone.DropboxDatastore`.
-  Backbone.DropboxDatastore.sync = Backbone.dropboxDatastoreSync = function(method, model, options) {
-    var store = model.dropboxDatastore || model.collection.dropboxDatastore,
-        syncDfd = Backbone.$.Deferred && Backbone.$.Deferred(), //If $ is having Deferred - use it.
-        resp, errorMessage;
+    // Using to convert returned Dropbox Datastore records to JSON
+    recordToJson: function(record) {
+      return record.getFields();
+    },
 
-    try {
+    // dropboxDatastoreSync delegate to the model or collection's
+    // *dropboxDatastore* property, which should be an instance of `Backbone.DropboxDatastore`.
+    sync: function(method, model, options) {
+      var store = model.dropboxDatastore || model.collection.dropboxDatastore,
+          syncDfd = Backbone.$.Deferred && Backbone.$.Deferred(), //If $ is having Deferred - use it.
+          syncCallback = _.partial(Backbone.DropboxDatastore._syncCallback, model, options, syncDfd); // partial apply callback with  some attributes
+
       switch (method) {
         case 'read':
-          resp = model.id === void 0 ? store.findAll() : store.find(model);
+          // check if it is a collection or model
+          if (_.isUndefined(model.id)) {
+            store.findAll(syncCallback);
+          } else {
+            store.find(model, syncCallback);
+          }
           break;
         case 'create':
-          resp = store.create(model);
+          store.create(model, syncCallback);
           break;
         case 'update':
-          resp = store.update(model);
+          store.update(model, syncCallback);
           break;
         case 'delete':
-          resp = store.destroy(model);
+          store.destroy(model, syncCallback);
           break;
       }
-    } catch(error) {
-      errorMessage = error.message;
-    }
 
-    if (resp) {
+      return syncDfd && syncDfd.promise();
+    },
+
+    _syncCallback: function(model, options, syncDfd, resp) {
       if (options && options.success) {
         if (Backbone.VERSION === '0.9.10') {
           options.success(model, resp, options);
@@ -156,43 +168,25 @@
       if (syncDfd) {
         syncDfd.resolve(resp);
       }
-    } else {
-      errorMessage = errorMessage ? errorMessage : 'Record Not Found';
+    },
 
-      if (options && options.error) {
-        if (Backbone.VERSION === '0.9.10') {
-          options.error(model, errorMessage, options);
-        } else {
-          options.error(errorMessage);
-        }
-      }
+    _callCallbackIfExists: function(name, model, resp, options) {
 
-      if (syncDfd) {
-        syncDfd.reject(errorMessage);
-      }
     }
+  });
 
-    // add compatibility with $.ajax
-    // always execute callback for success and error
-    if (options && options.complete) {
-      options.complete(resp);
-    }
-
-    return syncDfd && syncDfd.promise();
-  };
-
-  Backbone.ajaxSync = Backbone.sync;
+  Backbone.originalSync = Backbone.sync;
 
   Backbone.getSyncMethod = function(model) {
     if(model.dropboxDatastore || (model.collection && model.collection.dropboxDatastore)) {
-      return Backbone.dropboxDatastoreSync;
+      return Backbone.DropboxDatastore.sync;
     } else {
-      return Backbone.ajaxSync;
+      return Backbone.originalSync;
     }
   };
 
   // Override 'Backbone.sync' to default to dropboxDatastoreSync,
-  // the original 'Backbone.sync' is still available in 'Backbone.ajaxSync'
+  // the original 'Backbone.sync' is still available in 'Backbone.originalSync'
   Backbone.sync = function(method, model, options) {
     return Backbone.getSyncMethod(model).call(this, method, model, options);
   };
