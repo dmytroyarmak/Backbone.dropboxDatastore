@@ -31,10 +31,6 @@
   // Instance methods of DropboxDatastore
   _.extend(Backbone.DropboxDatastore.prototype, {
 
-    // Save the current state of the **Store** to *Dropbox Datastore*.
-    save: function(model) {
-    },
-
     // Add a model to *Dropbox Datastore*.
     create: function(model) {
     },
@@ -44,7 +40,22 @@
     },
 
     // Retrieve a model from *Dropbox Datastore* by id.
-    find: function(model) {
+    find: function(model, callback) {
+      this.getTable(function(table) {
+        var params = {},
+            result;
+        if (model.isNew()) {
+          throw new Error('Cannot fetch data for model without id');
+        } else {
+          params[model.idAttribute] = model.id;
+          result = _.first(table.query(params));
+          if (result) {
+            callback(Backbone.DropboxDatastore.recordToJson(result));
+          } else {
+            throw new Error('Result not found');
+          }
+        }
+      });
     },
 
     // Return the array of all models currently in table.
@@ -137,7 +148,7 @@
       switch (method) {
         case 'read':
           // check if it is a collection or model
-          if (_.isUndefined(model.id)) {
+          if (model instanceof Backbone.Collection) {
             store.findAll(syncCallback);
           } else {
             store.find(model, syncCallback);
@@ -168,10 +179,6 @@
       if (syncDfd) {
         syncDfd.resolve(resp);
       }
-    },
-
-    _callCallbackIfExists: function(name, model, resp, options) {
-
     }
   });
 

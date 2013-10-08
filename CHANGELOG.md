@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.3 - Oct 7, 2013
+- implement fetch for model
+
 ## 0.1.2 - Oct 7, 2013
 - implement fetch for collection
 
