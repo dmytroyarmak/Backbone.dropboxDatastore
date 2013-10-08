@@ -135,7 +135,9 @@
 
     // Using to convert returned Dropbox Datastore records to JSON
     recordToJson: function(record) {
-      return record.getFields();
+      return _.extend(record.getFields(), {
+        id: record.getId()
+      });
     },
 
     // dropboxDatastoreSync delegate to the model or collection's

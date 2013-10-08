@@ -380,8 +380,9 @@ describe('Backbone.DropboxDatastore static methods', function() {
     var recordSpy, result;
 
     beforeEach(function() {
-      recordSpy = jasmine.createSpyObj('record', ['getFields']);
-      recordSpy.getFields.andReturn('fieldsMock');
+      recordSpy = jasmine.createSpyObj('record', ['getFields', 'getId']);
+      recordSpy.getFields.andReturn({foo: 1, bar: 'lalala'});
+      recordSpy.getId.andReturn('idMock');
       result = Backbone.DropboxDatastore.recordToJson(recordSpy);
     });
 
@@ -390,7 +391,7 @@ describe('Backbone.DropboxDatastore static methods', function() {
     });
 
     it('return result of getFields', function() {
-      expect(result).toBe('fieldsMock');
+      expect(result).toEqual({id: 'idMock', foo: 1, bar: 'lalala'});
     });
 
   });
