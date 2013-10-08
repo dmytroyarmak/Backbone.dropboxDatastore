@@ -54,7 +54,7 @@ window.SomeCollection = Backbone.Collection.extend({
 });
 ```
 
-For more details how Dropbox Datastore API works read tutorial: [Using the Datastore API in JavaScript]](https://www.dropbox.com/developers/datastore/tutorial/js)
+For more details how Dropbox Datastore API works read tutorial: [Using the Datastore API in JavaScript](https://www.dropbox.com/developers/datastore/tutorial/js)
 ### RequireJS
 
 Include [RequireJS](http://requirejs.org):
@@ -76,7 +76,7 @@ require.config({
 });
 ```
 
-Create client, authorize it and set to Backbone.DropboxDatastore.client as in previous section.
+*Create client, authorize it and set to Backbone.DropboxDatastore.client as in previous section.*
 
 Define your collection as a module:
 ```javascript
