@@ -40,26 +40,20 @@
     },
 
     // Update a model in *Dropbox DatastoreDropbox.Datastore.Table*.
-    update: function(model) {
+    update: function(model, callback) {
+      this.getTable(_.bind(function(table) {
+        var record = this._findRecordSync(table, model);
+        record.update(model.toJSON());
+        callback(Backbone.DropboxDatastore.recordToJson(record));
+      }, this));
     },
 
     // Retrieve a model from *Dropbox.Datastore.Table* by id.
     find: function(model, callback) {
-      this.getTable(function(table) {
-        var params = {},
-            record;
-        if (model.isNew()) {
-          throw new Error('Cannot fetch data for model without id');
-        } else {
-          params[model.idAttribute] = model.id;
-          record = _.first(table.query(params));
-          if (record) {
-            callback(Backbone.DropboxDatastore.recordToJson(record));
-          } else {
-            throw new Error('Result not found');
-          }
-        }
-      });
+      this.getTable(_.bind(function(table) {
+        var record = this._findRecordSync(table, model);
+        callback(Backbone.DropboxDatastore.recordToJson(record));
+      }, this));
     },
 
     // Return the array of all models currently in *Dropbox.Datastore.Table*.
@@ -87,6 +81,22 @@
         onGetDatastore = _.bind(this._onGetDatastore, this, callback);
         Backbone.DropboxDatastore.getDatastore(onGetDatastore);
       }
+    },
+
+    _findRecordSync: function(table, model) {
+        var params = {},
+            record;
+        if (model.isNew()) {
+          throw new Error('Cannot fetch data for model without id');
+        } else {
+          params[model.idAttribute] = model.id;
+          record = _.first(table.query(params));
+          if (record) {
+            return record;
+          } else {
+            throw new Error('Result not found');
+          }
+        }
     },
 
     _onGetDatastore: function(callback, datastore) {
