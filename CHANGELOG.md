@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0 - Oct 9, 2013
+- finish implementation of all CRUD methods
+- write some docs
+
 ## 0.1.5 - Oct 8, 2013
 - implement save for existing model(update)
 
@@ -23,4 +27,4 @@
 - defined scaffold for using custom sync method
 
 ## 0.0.1 - Oct 5, 2013
-- starting develope Dropbox Datastore adapter for Backbone.js
+- starting develop Dropbox Datastore adapter for Backbone.js
