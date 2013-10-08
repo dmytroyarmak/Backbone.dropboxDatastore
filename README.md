@@ -8,11 +8,38 @@ Quite simply a Dropbox Datastore adapter for Backbone. It's a drop-in replacemen
 
 ## Usage
 
-Include Backbone.dropboxDatastore after having included Backbone.js:
+You need to have registered application with an OAuth redirect URI registered on the [App Console](https://www.dropbox.com/developers/apps) before using the Dropbox Datastore API.
+
+Include [Datastore API SDKs](https://www.dropbox.com/developers/datastore/sdks/js) and Backbone.dropboxDatastore after having included Backbone.js:
 
 ```html
 <script type="text/javascript" src="backbone.js"></script>
 <script type="text/javascript" src="backbone.dropboxDatastore.js"></script>
+<script type="text/javascript" src="https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest.js"></script>
+```
+
+To start using the Datastore API, you'll need to create a Client object. This object lets you link to a Dropbox user's account, which is the first step to working with data on their behalf.
+
+You'll want to create the client object as soon as your app has loaded. Depending on your JavaScript framework, this can be done in a variety of different ways. For example, in jQuery, you would use the $() function.
+
+After authentication you should set client object to Backbone.DropboxDatastore.client property.
+
+*Be sure to replace APP_KEY with the real value for your app.*
+
+```javascript
+var client = new Dropbox.Client({key: APP_KEY});
+
+// Try to finish OAuth authorization.
+client.authenticate({interactive: false});
+
+// Redirect to Dropbox to authenticate if client isn't authenticated
+if (!client.isAuthenticated()) client.authenticate();
+
+// Set client for Backbone.DropboxDatastore to work with Dropbox
+Backbone.DropboxDatastore.client = client;
+
+// Client is authenticated and set for Backbone.DropboxDatastore.
+// You can use CRUD methods of collection with DropboxDatastore
 ```
 
 Create your collections like so:
@@ -20,12 +47,14 @@ Create your collections like so:
 ```javascript
 window.SomeCollection = Backbone.Collection.extend({
 
-  dropboxDatastore: new Backbone.DropboxDatastore("SomeCollection"), // Unique name within your app.
+  dropboxDatastore: new Backbone.DropboxDatastore('SomeCollection'), // Unique name within your app.
 
   // ... everything else is normal.
 
 });
 ```
+
+For more details how Dropbox Datastore API works read tutorial: [Using the Datastore API in JavaScript]](https://www.dropbox.com/developers/datastore/tutorial/js)
 ### RequireJS
 
 Include [RequireJS](http://requirejs.org):
@@ -38,19 +67,22 @@ RequireJS config:
 ```javascript
 require.config({
     paths: {
-        jquery: "lib/jquery",
-        underscore: "lib/underscore",
-        backbone: "lib/backbone",
-        dropboxdatastore: "lib/backbone.dropboxDatastore"
+        jquery: 'lib/jquery',
+        underscore: 'lib/underscore',
+        backbone: 'lib/backbone',
+        dropbox: 'https://www.dropbox.com/static/api/dropbox-datastores-1.0-latest',
+        dropboxdatastore: 'lib/backbone.dropboxDatastore'
     }
 });
 ```
 
+Create client, authorize it and set to Backbone.DropboxDatastore.client as in previous section.
+
 Define your collection as a module:
 ```javascript
-define("someCollection", ["dropboxdatastore"], function() {
+define('someCollection', ['dropboxdatastore'], function() {
     var SomeCollection = Backbone.Collection.extend({
-        dropboxDatastore: new Backbone.DropboxDatastore("SomeCollection") // Unique name within your app.
+        dropboxDatastore: new Backbone.DropboxDatastore('SomeCollection') // Unique name within your app.
     });
 
     return new SomeCollection();
@@ -59,7 +91,7 @@ define("someCollection", ["dropboxdatastore"], function() {
 
 Require your collection:
 ```javascript
-require(["someCollection"], function(someCollection) {
+require(['someCollection'], function(someCollection) {
   // ready to use someCollection
 });
 ```
@@ -69,7 +101,7 @@ require(["someCollection"], function(someCollection) {
 If you're using [browserify](https://github.com/substack/node-browserify).
 
 ```javascript
-Backbone.DropboxDatastore = require("backbone.dropboxdatastore");
+Backbone.DropboxDatastore = require('backbone.dropboxdatastore');
 ```
 
 ## Contributing
