@@ -354,6 +354,40 @@ describe('Backbone.DropboxDatastore instance methods', function() {
       expect(callbackSpy).toHaveBeenCalledWith('fieldsMock');
     });
   });
+
+
+  describe('#destroy', function() {
+
+    var modelSpy, callbackSpy, recordSpy;
+
+    beforeEach(function() {
+      modelSpy = jasmine.createSpyObj('model', ['toJSON']);
+      modelSpy.toJSON.andReturn('attributesMock');
+      callbackSpy = jasmine.createSpy();
+      recordSpy = jasmine.createSpyObj('foundRecord', ['deleteRecord']);
+      spyOn(dropboxDatastore, 'getTable').andReturn('tableMock');
+      spyOn(dropboxDatastore, '_findRecordSync').andReturn(recordSpy);
+
+      dropboxDatastore.destroy(modelSpy, callbackSpy);
+
+      // Explicit call callback on success getTable
+      dropboxDatastore.getTable.mostRecentCall.args[0]('tableMock');
+    });
+
+    it('call getTable', function() {
+      expect(dropboxDatastore.getTable).toHaveBeenCalled();
+    });
+    it('call #_findRecordSync', function() {
+      expect(dropboxDatastore._findRecordSync).toHaveBeenCalledWith('tableMock', modelSpy);
+    });
+    it('call deleteRecord on found record ', function() {
+      expect(recordSpy.deleteRecord).toHaveBeenCalledWith();
+    });
+
+    it('call callback with empty object', function() {
+      expect(callbackSpy).toHaveBeenCalledWith({});
+    });
+  });
 });
 
 describe('Backbone.DropboxDatastore static methods', function() {

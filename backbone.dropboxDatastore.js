@@ -31,7 +31,7 @@
   // Instance methods of DropboxDatastore
   _.extend(Backbone.DropboxDatastore.prototype, {
 
-    // Insert a model to *Dropbox.Datastore.Table*.
+    // Insert new record to *Dropbox.Datastore.Table*.
     create: function(model, callback) {
       this.getTable(function(table) {
         var record = table.insert(model.toJSON());
@@ -39,7 +39,7 @@
       });
     },
 
-    // Update a model in *Dropbox DatastoreDropbox.Datastore.Table*.
+    // Update existing record in *Dropbox.Datastore.Table*.
     update: function(model, callback) {
       this.getTable(_.bind(function(table) {
         var record = this._findRecordSync(table, model);
@@ -48,7 +48,7 @@
       }, this));
     },
 
-    // Retrieve a model from *Dropbox.Datastore.Table* by id.
+    // Find record from *Dropbox.Datastore.Table* by id.
     find: function(model, callback) {
       this.getTable(_.bind(function(table) {
         var record = this._findRecordSync(table, model);
@@ -56,7 +56,7 @@
       }, this));
     },
 
-    // Return the array of all models currently in *Dropbox.Datastore.Table*.
+    // Find all records currently in *Dropbox.Datastore.Table*.
     findAll: function(callback) {
       this.getTable(function(table) {
         var result = _.map(table.query(), Backbone.DropboxDatastore.recordToJson);
@@ -64,8 +64,13 @@
       });
     },
 
-    // Delete a model from *Dropbox.Datastore.Table*.
-    destroy: function(model) {
+    // Remove record from *Dropbox.Datastore.Table*.
+    destroy: function(model, callback) {
+      this.getTable(_.bind(function(table) {
+        var record = this._findRecordSync(table, model);
+        record.deleteRecord();
+        callback({});
+      }, this));
     },
 
     // lazy table getter
@@ -77,9 +82,10 @@
         // the function using Underscore defer
         _.defer(callback, this._table);
       } else {
-        // Bind and partial applying _onGetDatastore by callback
-        onGetDatastore = _.bind(this._onGetDatastore, this, callback);
-        Backbone.DropboxDatastore.getDatastore(onGetDatastore);
+        Backbone.DropboxDatastore.getDatastore(_.bind(function(datastore) {
+          this._table = datastore.getTable(this.name);
+          callback(this._table);
+        }, this));
       }
     },
 
@@ -97,12 +103,8 @@
             throw new Error('Result not found');
           }
         }
-    },
-
-    _onGetDatastore: function(callback, datastore) {
-      this._table = datastore.getTable(this.name);
-      callback(this._table);
     }
+
   });
 
   // Static methods of DropboxDatastore
