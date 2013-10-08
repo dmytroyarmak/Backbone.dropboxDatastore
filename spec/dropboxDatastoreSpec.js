@@ -137,23 +137,20 @@ describe('Backbone.DropboxDatastore instance methods', function() {
 
   describe('#findAll', function() {
 
-    var tableSpy, callbackSpy, record1Spy, record2Spy;
+    var tableSpy, callbackSpy;
 
     beforeEach(function() {
       callbackSpy = jasmine.createSpy('callback');
 
-      record1Spy = jasmine.createSpyObj('record1', ['getFields']);
-      record2Spy = jasmine.createSpyObj('record2', ['getFields']);
-
       spyOn(Backbone.DropboxDatastore, 'recordToJson').andCallFake(function(record) {
         switch(record) {
-          case record1Spy: return 'fields1Mock';
-          case record2Spy: return 'fields2Mock';
+          case 'record1Spy': return 'fields1Mock';
+          case 'record2Spy': return 'fields2Mock';
         }
       });
 
       tableSpy = jasmine.createSpyObj('table', ['query']);
-      tableSpy.query.andReturn([record1Spy, record2Spy]);
+      tableSpy.query.andReturn(['record1Spy', 'record2Spy']);
       spyOn(dropboxDatastore, 'getTable');
 
       dropboxDatastore.findAll(callbackSpy);
@@ -181,7 +178,7 @@ describe('Backbone.DropboxDatastore instance methods', function() {
 
   describe('#find', function() {
 
-    var modelSpy, tableSpy, callbackSpy, recordSpy;
+    var modelSpy, tableSpy, callbackSpy;
 
     beforeEach(function() {
       callbackSpy = jasmine.createSpy('callback');
@@ -200,9 +197,8 @@ describe('Backbone.DropboxDatastore instance methods', function() {
 
       describe('when record exists', function() {
         beforeEach(function() {
-          recordSpy = jasmine.createSpyObj('record', ['getFields']);
           spyOn(Backbone.DropboxDatastore, 'recordToJson').andReturn('fieldsMock');
-          tableSpy.query.andReturn([recordSpy]);
+          tableSpy.query.andReturn(['recordSpy']);
 
           dropboxDatastore.find(modelSpy, callbackSpy);
 
@@ -219,7 +215,7 @@ describe('Backbone.DropboxDatastore instance methods', function() {
         });
 
         it('call Backbone.DropboxDatastore.recordToJson on returned record', function() {
-          expect(Backbone.DropboxDatastore.recordToJson).toHaveBeenCalledWith(recordSpy);
+          expect(Backbone.DropboxDatastore.recordToJson).toHaveBeenCalledWith('recordSpy');
         });
 
         it('call callback with fields', function() {
@@ -265,6 +261,52 @@ describe('Backbone.DropboxDatastore instance methods', function() {
     });
 
   });
+
+  describe('#create', function() {
+
+    var tableSpy, callbackSpy, modelSpy;
+
+    beforeEach(function() {
+      callbackSpy = jasmine.createSpy('callback');
+
+      modelSpy = jasmine.createSpyObj('model', ['toJSON']);
+      modelSpy.toJSON.andReturn('modelAttributesMock');
+
+      spyOn(Backbone.DropboxDatastore, 'recordToJson').andCallFake(function(record) {
+        if (record === 'recordSpy') {
+          return 'fieldsMock';
+        }
+      });
+
+      spyOn(dropboxDatastore, 'getTable');
+
+      dropboxDatastore.create(modelSpy, callbackSpy);
+
+      tableSpy = jasmine.createSpyObj('table', ['insert']);
+      tableSpy.insert.andReturn('recordSpy');
+
+      // Explicit call callback on success getTable
+      dropboxDatastore.getTable.mostRecentCall.args[0](tableSpy);
+    });
+
+    it('call getTable', function() {
+      expect(dropboxDatastore.getTable).toHaveBeenCalled();
+    });
+
+    it('call insert on table', function() {
+      expect(modelSpy.toJSON).toHaveBeenCalled();
+      expect(tableSpy.insert).toHaveBeenCalledWith('modelAttributesMock');
+    });
+
+    it('call Backbone.DropboxDatastore.recordToJson with created record', function() {
+      expect(Backbone.DropboxDatastore.recordToJson).toHaveBeenCalledWith('recordSpy');
+    });
+
+    it('call callback with fields of new record', function() {
+      expect(callbackSpy).toHaveBeenCalledWith('fieldsMock');
+    });
+  });
+
 });
 
 describe('Backbone.DropboxDatastore static methods', function() {

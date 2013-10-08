@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.4 - Oct 8, 2013
+- implement save for model(create)
+
 ## 0.1.3 - Oct 7, 2013
 - implement fetch for model
 

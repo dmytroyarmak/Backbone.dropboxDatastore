@@ -31,26 +31,30 @@
   // Instance methods of DropboxDatastore
   _.extend(Backbone.DropboxDatastore.prototype, {
 
-    // Add a model to *Dropbox Datastore*.
-    create: function(model) {
+    // Insert a model to *Dropbox.Datastore.Table*.
+    create: function(model, callback) {
+      this.getTable(function(table) {
+        var record = table.insert(model.toJSON());
+        callback(Backbone.DropboxDatastore.recordToJson(record));
+      });
     },
 
-    // Update a model in *Dropbox Datastore*.
+    // Update a model in *Dropbox DatastoreDropbox.Datastore.Table*.
     update: function(model) {
     },
 
-    // Retrieve a model from *Dropbox Datastore* by id.
+    // Retrieve a model from *Dropbox.Datastore.Table* by id.
     find: function(model, callback) {
       this.getTable(function(table) {
         var params = {},
-            result;
+            record;
         if (model.isNew()) {
           throw new Error('Cannot fetch data for model without id');
         } else {
           params[model.idAttribute] = model.id;
-          result = _.first(table.query(params));
-          if (result) {
-            callback(Backbone.DropboxDatastore.recordToJson(result));
+          record = _.first(table.query(params));
+          if (record) {
+            callback(Backbone.DropboxDatastore.recordToJson(record));
           } else {
             throw new Error('Result not found');
           }
@@ -58,7 +62,7 @@
       });
     },
 
-    // Return the array of all models currently in table.
+    // Return the array of all models currently in *Dropbox.Datastore.Table*.
     findAll: function(callback) {
       this.getTable(function(table) {
         var result = _.map(table.query(), Backbone.DropboxDatastore.recordToJson);
@@ -66,7 +70,7 @@
       });
     },
 
-    // Delete a model from *Dropbox Datastore*.
+    // Delete a model from *Dropbox.Datastore.Table*.
     destroy: function(model) {
     },
 
