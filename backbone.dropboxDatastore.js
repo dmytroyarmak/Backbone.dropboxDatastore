@@ -95,8 +95,13 @@
         if (model.isNew()) {
           throw new Error('Cannot fetch data for model without id');
         } else {
-          params[model.idAttribute] = model.id;
-          record = _.first(table.query(params));
+          if (model.idAttribute === 'id') {
+            record = table.get(model.id);
+          } else {
+            params[model.idAttribute] = model.id;
+            record = _.first(table.query(params));
+          }
+
           if (record) {
             return record;
           } else {

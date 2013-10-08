@@ -214,45 +214,85 @@ describe('Backbone.DropboxDatastore instance methods', function() {
 
     var modelSpy, tableSpy, result;
 
-    beforeEach(function() {
-      tableSpy = jasmine.createSpyObj('table', ['query']);
-    });
-
     describe('when model have id', function() {
 
       beforeEach(function() {
         modelSpy = jasmine.createSpyObj('model', ['isNew']);
         modelSpy.isNew.andReturn(false);
         modelSpy.id = 'idMock';
-        modelSpy.idAttribute = 'idAttributeMock';
       });
 
-      describe('when record exists', function() {
+      describe('with idAttribute equal "id"', function() {
+
         beforeEach(function() {
-          tableSpy.query.andReturn(['recordSpy']);
-
-          result = dropboxDatastore._findRecordSync(tableSpy, modelSpy);
+          modelSpy.idAttribute = 'id';
+          tableSpy = jasmine.createSpyObj('table', ['get']);
         });
 
-        it('call query on table', function() {
-          expect(tableSpy.query).toHaveBeenCalledWith({idAttributeMock: 'idMock'});
+        describe('when record exists', function() {
+          beforeEach(function() {
+            tableSpy.get.andReturn('recordSpy');
+
+            result = dropboxDatastore._findRecordSync(tableSpy, modelSpy);
+          });
+
+          it('call get on table', function() {
+            expect(tableSpy.get).toHaveBeenCalledWith('idMock');
+          });
+
+          it('return found record', function() {
+            expect(result).toBe('recordSpy');
+          });
+
         });
 
-        it('return found record', function() {
-          expect(result).toBe('recordSpy');
-        });
+        describe('when record does not exist', function() {
+          beforeEach(function() {
+            tableSpy.get.andReturn(null);
+          });
 
+          it('throw error: result not found', function() {
+            expect(function() {
+              dropboxDatastore._findRecordSync(tableSpy, modelSpy);
+            }).toThrow();
+          });
+        });
       });
 
-      describe('when record does not exist', function() {
+      describe('with idAttribute not equal "id"', function() {
+
         beforeEach(function() {
-          tableSpy.query.andReturn([]);
+          tableSpy = jasmine.createSpyObj('table', ['query']);
+          modelSpy.idAttribute = 'idAttributeMock';
         });
 
-        it('throw error: result not found', function() {
-          expect(function() {
-            dropboxDatastore._findRecordSync(tableSpy, modelSpy);
-          }).toThrow();
+        describe('when record exists', function() {
+          beforeEach(function() {
+            tableSpy.query.andReturn(['recordSpy']);
+
+            result = dropboxDatastore._findRecordSync(tableSpy, modelSpy);
+          });
+
+          it('call query on table', function() {
+            expect(tableSpy.query).toHaveBeenCalledWith({idAttributeMock: 'idMock'});
+          });
+
+          it('return found record', function() {
+            expect(result).toBe('recordSpy');
+          });
+
+        });
+
+        describe('when record does not exist', function() {
+          beforeEach(function() {
+            tableSpy.query.andReturn([]);
+          });
+
+          it('throw error: result not found', function() {
+            expect(function() {
+              dropboxDatastore._findRecordSync(tableSpy, modelSpy);
+            }).toThrow();
+          });
         });
       });
 
