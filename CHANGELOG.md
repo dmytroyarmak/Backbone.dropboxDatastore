@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 - Oct 10, 2013
+- don't throw exception when try to update or delete not existing model
+- create new record when try to update not existing one
+- return success when try to delete not existing record
+
 ## 0.2.0 - Oct 9, 2013
 - finish implementation of all CRUD methods
 - write some docs

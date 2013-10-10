@@ -1,4 +1,4 @@
-# Backbone Dropbox Datastore Adapter v0.2.0
+# Backbone Dropbox Datastore Adapter v0.2.1
 
 [![Build Status](https://secure.travis-ci.org/dmytroyarmak/Backbone.dropboxDatastore.png?branch=master)](http://travis-ci.org/dmytroyarmak/Backbone.dropboxDatastore)
 

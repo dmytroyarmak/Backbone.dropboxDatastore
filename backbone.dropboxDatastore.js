@@ -43,7 +43,11 @@
     update: function(model, callback) {
       this.getTable(_.bind(function(table) {
         var record = this._findRecordSync(table, model);
-        record.update(model.toJSON());
+        if (record) {
+          record.update(model.toJSON());
+        } else {
+          record = table.insert(model.toJSON());
+        }
         callback(Backbone.DropboxDatastore.recordToJson(record));
       }, this));
     },
@@ -52,7 +56,11 @@
     find: function(model, callback) {
       this.getTable(_.bind(function(table) {
         var record = this._findRecordSync(table, model);
-        callback(Backbone.DropboxDatastore.recordToJson(record));
+        if (record) {
+          callback(Backbone.DropboxDatastore.recordToJson(record));
+        } else {
+          throw new Error('Record not found');
+        }
       }, this));
     },
 
@@ -68,7 +76,9 @@
     destroy: function(model, callback) {
       this.getTable(_.bind(function(table) {
         var record = this._findRecordSync(table, model);
-        record.deleteRecord();
+        if (record) {
+          record.deleteRecord();
+        }
         callback({});
       }, this));
     },
@@ -102,11 +112,7 @@
             record = _.first(table.query(params));
           }
 
-          if (record) {
-            return record;
-          } else {
-            throw new Error('Result not found');
-          }
+          return record;
         }
     }
 
