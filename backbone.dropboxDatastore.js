@@ -139,7 +139,7 @@
         onOpenDatastore = _.bind(this._onOpenDatastore, this, datastoreId, callback);
 
         // we can open only one instance of Datastore simultaneously
-        this.getDatastoreManager()._getOrCreateDatastoreByDsid(onOpenDatastore);
+        this.getDatastoreManager()._getOrCreateDatastoreByDsid(datastoreId, onOpenDatastore);
       }
     },
 

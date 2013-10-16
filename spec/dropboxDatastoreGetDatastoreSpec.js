@@ -38,13 +38,16 @@ describe('Backbone.DropboxDatastore.getDatastore', function() {
     });
 
     it('call _getOrCreateDatastoreByDsid on datastoreManager', function() {
-      expect(datastoreManagerSpy._getOrCreateDatastoreByDsid).toHaveBeenCalled();
+      expect(datastoreManagerSpy._getOrCreateDatastoreByDsid).toHaveBeenCalledWith(
+        'datastoreIdMock',
+        jasmine.any(Function)
+      );
     });
 
     describe('if _getOrCreateDatastoreByDsid processed with error', function() {
       it('throw an error', function() {
         expect(function() {
-          datastoreManagerSpy._getOrCreateDatastoreByDsid.mostRecentCall.args[0]('errorMock', null);
+          datastoreManagerSpy._getOrCreateDatastoreByDsid.mostRecentCall.args[1]('errorMock', null);
         }).toThrow();
       });
     });
@@ -52,7 +55,7 @@ describe('Backbone.DropboxDatastore.getDatastore', function() {
     describe('if _getOrCreateDatastoreByDsid processed without errors', function() {
 
       beforeEach(function() {
-        datastoreManagerSpy._getOrCreateDatastoreByDsid.mostRecentCall.args[0](null, 'datastoreMock');
+        datastoreManagerSpy._getOrCreateDatastoreByDsid.mostRecentCall.args[1](null, 'datastoreMock');
       });
 
       it('store returned Datastore and call callback with stored Datastore', function() {

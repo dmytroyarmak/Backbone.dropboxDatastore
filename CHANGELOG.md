@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.1 - Oct 16, 2013
+- fix error with opening datastore
+
 ## 0.3.0 - Oct 16, 2013
 - add ability to store collections in different Datastores
 
