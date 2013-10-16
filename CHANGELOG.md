@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.0 - Oct 16, 2013
+- add ability to store collections in different Datastores
+
 ## 0.2.1 - Oct 10, 2013
 - don't throw exception when try to update or delete not existing model
 - create new record when try to update not existing one
