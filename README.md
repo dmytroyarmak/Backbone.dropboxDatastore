@@ -54,6 +54,20 @@ window.SomeCollection = Backbone.Collection.extend({
 });
 ```
 
+By default collections store on default Datastore. If you want use specific datastore pass options object as second attribute to Backbone.DropboxDatastore with property datastoreId:
+
+```javascript
+window.SomeCollection = Backbone.Collection.extend({
+
+  dropboxDatastore: new Backbone.DropboxDatastore('SomeCollection', {
+    datastoreId: 'MyCustomDatastore'
+  }),
+
+  // ... everything else is normal.
+
+});
+```
+
 For more details how Dropbox Datastore API works read tutorial: [Using the Datastore API in JavaScript](https://www.dropbox.com/developers/datastore/tutorial/js)
 ### RequireJS
 
