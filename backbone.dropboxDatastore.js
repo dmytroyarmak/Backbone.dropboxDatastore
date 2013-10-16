@@ -24,8 +24,10 @@
 
   // Our Store is represented by a single Dropbox.Datastore.Table. Create it
   // with a meaningful name. This name should be unique per application.
-  Backbone.DropboxDatastore = function(name) {
+  Backbone.DropboxDatastore = function(name, options) {
+    options = options || {};
     this.name = name;
+    this.datastoreId = options.datastoreId || 'default';
   };
 
   // Instance methods of DropboxDatastore
@@ -92,7 +94,7 @@
         // the function using Underscore defer
         _.defer(callback, this._table);
       } else {
-        Backbone.DropboxDatastore.getDatastore(_.bind(function(datastore) {
+        Backbone.DropboxDatastore.getDatastore(this.datastoreId, _.bind(function(datastore) {
           this._table = datastore.getTable(this.name);
           callback(this._table);
         }, this));
@@ -120,28 +122,33 @@
 
   // Static methods of DropboxDatastore
   _.extend(Backbone.DropboxDatastore, {
-    getDatastore: function(callback) {
-      var onOpenDefaultDatastore;
 
-      if (this._datastore) {
+    _datastores: {},
+
+    getDatastore: function(datastoreId, callback) {
+      var datastore = this._datastores[datastoreId],
+          onOpenDatastore;
+
+      if(datastore) {
+
         // To be consistent to async nature of this method defers invoking
-        // the function using Underscore defer
-        _.defer(callback, this._datastore);
+        // of the function using Underscore defer
+        _.defer(callback, datastore);
       } else {
-        // Bind and partial applying _onOpenDefaultDatastore by callback
-        onOpenDefaultDatastore = _.bind(this._onOpenDefaultDatastore, this, callback);
+        // Bind and partial applying _onOpenDatastore by callback
+        onOpenDatastore = _.bind(this._onOpenDatastore, this, datastoreId, callback);
 
         // we can open only one instance of Datastore simultaneously
-        this.getDatastoreManager().openDefaultDatastore(onOpenDefaultDatastore);
+        this.getDatastoreManager()._getOrCreateDatastoreByDsid(onOpenDatastore);
       }
     },
 
-    _onOpenDefaultDatastore: function(callback, error, datastore) {
+    _onOpenDatastore: function(datastoreId, callback, error, datastore) {
       if (error) {
-        throw new Error('Error on openDefaultDatastore: ' + error.responseText);
+        throw new Error('Error on _getOrCreateDatastoreByDsid: ' + error.responseText);
       }
       // cache opened datastore
-      this._datastore = datastore;
+      this._datastores[datastoreId] = datastore;
       callback(datastore);
     },
 
