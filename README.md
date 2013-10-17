@@ -88,6 +88,25 @@ if (currentStatus === 'uploading') {
 }
 ````
 
+Also you can listen to change status event on dropboxDatastore:
+
+```javascript
+myCollection.dropboxDatastore.on('change:status', function(status, dropboxDatastore){
+  // do something...
+});
+
+````
+
+Read more: [Checking the datastore sync status in JavaScript](https://www.dropbox.com/developers/blog/61/checking-the-datastore-sync-status-in-javascript).
+
+### Closing dropboxDatastore
+
+To fully removing created dropboxDatastore you should call close method on dropboxDatastore.
+
+```javascript
+myCollection.dropboxDatastore.close();
+````
+
 ### RequireJS
 
 Include [RequireJS](http://requirejs.org):

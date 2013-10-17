@@ -31,7 +31,7 @@
   };
 
   // Instance methods of DropboxDatastore
-  _.extend(Backbone.DropboxDatastore.prototype, {
+  _.extend(Backbone.DropboxDatastore.prototype, Backbone.Events, {
 
     // Insert new record to *Dropbox.Datastore.Table*.
     create: function(model, callback) {
@@ -96,6 +96,7 @@
       } else {
         Backbone.DropboxDatastore.getDatastore(this.datastoreId, _.bind(function(datastore) {
           this._table = datastore.getTable(this.name);
+          this._startListenToChangeStatus(datastore);
           callback(this._table);
         }, this));
       }
@@ -106,6 +107,12 @@
         return 'uploading';
       } else {
         return 'synced';
+      }
+    },
+
+    close: function() {
+      if (this._table) {
+        this._stopListenToChangeStatus(this._table._datastore);
       }
     },
 
@@ -124,8 +131,23 @@
 
           return record;
         }
-    }
+    },
 
+    _startListenToChangeStatus: function(datastore) {
+      this._changeStatusListener = _.bind(this._onChangeStatus, this);
+      datastore.syncStatusChanged.addListener(this._changeStatusListener);
+    },
+
+    _stopListenToChangeStatus: function(datastore) {
+      if (this._changeStatusListener) {
+        datastore.syncStatusChanged.removeListener(this._changeStatusListener);
+        delete this._changeStatusListener;
+      }
+    },
+
+    _onChangeStatus: function() {
+      this.trigger('change:status', this.getStatus(), this);
+    }
   });
 
   // Static methods of DropboxDatastore

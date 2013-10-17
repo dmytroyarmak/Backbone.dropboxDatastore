@@ -26,12 +26,17 @@ describe('Backbone.DropboxDatastore#getTable', function() {
     describe('when callback called', function() {
 
       beforeEach(function() {
+        spyOn(dropboxDatastore, '_startListenToChangeStatus');
         // Explicit call callback because we stub getDatastore
         Backbone.DropboxDatastore.getDatastore.mostRecentCall.args[1](datastoreSpy);
       });
 
       it('store returned Datastore', function() {
         expect(dropboxDatastore._table).toBe('tableMock');
+      });
+
+      it('call _startListenToChangeStatus with datastore', function() {
+        expect(dropboxDatastore._startListenToChangeStatus).toHaveBeenCalledWith(datastoreSpy);
       });
 
       it('call callback with stored Datastore', function() {
