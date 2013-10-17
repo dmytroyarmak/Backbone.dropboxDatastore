@@ -54,6 +54,10 @@ window.SomeCollection = Backbone.Collection.extend({
 });
 ```
 
+For more details how Dropbox Datastore API works read tutorial: [Using the Datastore API in JavaScript](https://www.dropbox.com/developers/datastore/tutorial/js)
+
+### Custom Datastore ID
+
 By default collections store on default Datastore. If you want use specific datastore pass options object as second attribute to Backbone.DropboxDatastore with property datastoreId:
 
 ```javascript
@@ -68,7 +72,22 @@ window.SomeCollection = Backbone.Collection.extend({
 });
 ```
 
-For more details how Dropbox Datastore API works read tutorial: [Using the Datastore API in JavaScript](https://www.dropbox.com/developers/datastore/tutorial/js)
+### Checking the datastore sync status
+
+When your app makes a change to a datastore, that change is queued up locally and sent to Dropbox asynchronously. This means that there's a period of time between when a change is made and when that change has been uploaded to Dropbox.
+
+To get current status of datastore you can just call getStatus() on dropboxDatastore object that returns 'uploading' or 'synced':
+
+```javascript
+var currentStatus = myCollection.dropboxDatastore.getStatus();
+
+if (currentStatus === 'uploading') {
+  // There are data that are not saved to Dropbox
+} else if (currentStatus === 'synced') {
+  // All data are saved to Dropbox
+}
+````
+
 ### RequireJS
 
 Include [RequireJS](http://requirejs.org):

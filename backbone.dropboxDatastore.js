@@ -101,6 +101,14 @@
       }
     },
 
+    getStatus: function() {
+      if (this._table && this._table._datastore.getSyncStatus().uploading) {
+        return 'uploading';
+      } else {
+        return 'synced';
+      }
+    },
+
     _findRecordSync: function(table, model) {
         var params = {},
             record;
