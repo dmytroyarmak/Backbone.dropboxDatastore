@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0 - Oct 17, 2013
+- add ability to get current sync status of dropboxDatastore object
+- add change status event to dropboxDatastore object
+
 ## 0.3.1 - Oct 16, 2013
 - fix error with opening datastore
 
