@@ -6,6 +6,13 @@ Quite simply a Dropbox Datastore adapter for Backbone. It's a drop-in replacemen
 
 [![Gittip](http://badgr.co/gittip/dmytroyarmak.png)](https://www.gittip.com/dmytroyarmak/)
 
+## Example Application
+
+There is an implementation of TodoMVC using backbone.dropboxDatastore as storage.
+
+* [Demo](https://dropboxdatastore.herokuapp.com/)
+* [Code in Github](https://github.com/dmytroyarmak/todomvc-backbone.dropboxDatastore)
+
 ## Usage
 
 You need to have registered application with an OAuth redirect URI registered on the [App Console](https://www.dropbox.com/developers/apps) before using the Dropbox Datastore API.
