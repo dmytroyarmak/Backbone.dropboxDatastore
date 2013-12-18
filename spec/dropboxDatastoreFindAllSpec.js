@@ -1,10 +1,38 @@
 describe('Backbone.DropboxDatastore#findAll', function() {
-
-  var dropboxDatastore, tableSpy, callbackSpy;
+  var resultPromise, dropboxDatastore, getTableDefer;
 
   beforeEach(function() {
     dropboxDatastore = new Backbone.DropboxDatastore('tableName');
-    callbackSpy = jasmine.createSpy('callback');
+
+    getTableDefer = $.Deferred();
+    getTableDefer.resolve('tableMock');
+    spyOn(dropboxDatastore, 'getTable').andReturn(getTableDefer.promise());
+    spyOn(dropboxDatastore, '_findAllWithTable').andReturn('foundRecordsMock');
+
+    resultPromise = dropboxDatastore.findAll();
+  });
+
+  it('call getTable', function() {
+    expect(dropboxDatastore.getTable).toHaveBeenCalled();
+  });
+
+  it('call _findAllWithTable with table', function() {
+    expect(dropboxDatastore._findAllWithTable).toHaveBeenCalledWith('tableMock');
+  });
+
+  it('return promise with fields of found record', function() {
+    resultPromise.then(function(result) {
+      expect(result).toBe('foundRecordsMock');
+    });
+  });
+});
+
+describe('Backbone.DropboxDatastore#_findAllWithTable', function() {
+
+  var result, dropboxDatastore, tableSpy;
+
+  beforeEach(function() {
+    dropboxDatastore = new Backbone.DropboxDatastore('tableName');
 
     spyOn(Backbone.DropboxDatastore, 'recordToJson').andCallFake(function(record) {
       switch(record) {
@@ -15,16 +43,8 @@ describe('Backbone.DropboxDatastore#findAll', function() {
 
     tableSpy = jasmine.createSpyObj('table', ['query']);
     tableSpy.query.andReturn(['record1Spy', 'record2Spy']);
-    spyOn(dropboxDatastore, 'getTable');
 
-    dropboxDatastore.findAll(callbackSpy);
-
-    // Explicit call callback on success getTable
-    dropboxDatastore.getTable.mostRecentCall.args[0](tableSpy);
-  });
-
-  it('call getTable', function() {
-    expect(dropboxDatastore.getTable).toHaveBeenCalled();
+    result = dropboxDatastore._findAllWithTable(tableSpy);
   });
 
   it('call query on table', function() {
@@ -35,7 +55,7 @@ describe('Backbone.DropboxDatastore#findAll', function() {
     expect(Backbone.DropboxDatastore.recordToJson.calls.length).toBe(2);
   });
 
-  it('call callback with array of fields', function() {
-    expect(callbackSpy).toHaveBeenCalledWith(['fields1Mock', 'fields2Mock']);
+  it('return json of found records', function() {
+    expect(result).toEqual(['fields1Mock', 'fields2Mock']);
   });
 });

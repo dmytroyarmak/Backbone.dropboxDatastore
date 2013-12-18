@@ -31,6 +31,7 @@ module.exports = function(grunt) {
       src: '<%= pkg.main %>',
       options: {
         vendor: [
+          'bower_components/jquery/jquery.js',
           'bower_components/underscore/underscore.js',
           'bower_components/backbone/backbone.js'
         ],

@@ -34,73 +34,59 @@
   _.extend(Backbone.DropboxDatastore.prototype, Backbone.Events, {
 
     // Insert new record to *Dropbox.Datastore.Table*.
-    create: function(model, callback) {
-      this.getTable(function(table) {
-        var record = table.insert(model.toJSON());
-        callback(Backbone.DropboxDatastore.recordToJson(record));
-      });
+    create: function(model) {
+      var createRecord = _.bind(this._createWithTable, this, model);
+
+      return this.getTable()
+        .then(createRecord)
+        .then(Backbone.DropboxDatastore.recordToJson);
     },
 
     // Update existing record in *Dropbox.Datastore.Table*.
-    update: function(model, callback) {
-      this.getTable(_.bind(function(table) {
-        var record = this._findRecordSync(table, model);
-        if (record) {
-          record.update(model.toJSON());
-        } else {
-          record = table.insert(model.toJSON());
-        }
-        callback(Backbone.DropboxDatastore.recordToJson(record));
-      }, this));
+    update: function(model) {
+      var updateRecord = _.bind(this._updateWithTable, this, model);
+
+      return this.getTable()
+        .then(updateRecord)
+        .then(Backbone.DropboxDatastore.recordToJson);
     },
 
     // Find record from *Dropbox.Datastore.Table* by id.
-    find: function(model, callback) {
-      this.getTable(_.bind(function(table) {
-        var record = this._findRecordSync(table, model);
-        if (record) {
-          callback(Backbone.DropboxDatastore.recordToJson(record));
-        } else {
-          throw new Error('Record not found');
-        }
-      }, this));
+    find: function(model) {
+      var findRecord = _.bind(this._findWithTable, this, model),
+          throwIfNotFound = this._throwIfNotFound;
+
+      return this.getTable()
+        .then(findRecord)
+        .then(throwIfNotFound)
+        .then(Backbone.DropboxDatastore.recordToJson);
     },
 
     // Find all records currently in *Dropbox.Datastore.Table*.
-    findAll: function(callback) {
-      this.getTable(function(table) {
-        var result = _.map(table.query(), Backbone.DropboxDatastore.recordToJson);
-        callback(result);
-      });
+    findAll: function() {
+      var findAllRecords = _.bind(this._findAllWithTable, this);
+
+      return this.getTable()
+        .then(findAllRecords);
     },
 
     // Remove record from *Dropbox.Datastore.Table*.
-    destroy: function(model, callback) {
-      this.getTable(_.bind(function(table) {
-        var record = this._findRecordSync(table, model);
-        if (record) {
-          record.deleteRecord();
-        }
-        callback({});
-      }, this));
+    destroy: function(model) {
+      var destroyRecord = _.bind(this._destroyWithTable, this, model);
+
+      return this.getTable()
+        .then(destroyRecord);
     },
 
     // lazy table getter
-    getTable: function(callback) {
-      var onGetDatastore;
-
-      if (this._table) {
-        // To be consistent to async nature of this method defers invoking
-        // the function using Underscore defer
-        _.defer(callback, this._table);
-      } else {
-        Backbone.DropboxDatastore.getDatastore(this.datastoreId, _.bind(function(datastore) {
-          this._table = datastore.getTable(this.name);
-          this._startListenToChangeStatus(datastore);
-          callback(this._table);
-        }, this));
+    getTable: function() {
+      if (!this._tablePromise) {
+        this._tablePromise = this._createTablePromise();
       }
+
+      return this._tablePromise;
     },
+
 
     getStatus: function() {
       if (this._table && this._table._datastore.getSyncStatus().uploading) {
@@ -116,7 +102,30 @@
       }
     },
 
-    _findRecordSync: function(table, model) {
+    _createTablePromise: function() {
+      return Backbone.DropboxDatastore.getDatastore(this.datastoreId).then(_.bind(function(datastore) {
+        this._startListenToChangeStatus(datastore);
+        return datastore.getTable(this.name);
+      }, this));
+    },
+
+    _createWithTable: function(model, table) {
+      return table.insert(model.toJSON());
+    },
+
+    _updateWithTable: function(model, table) {
+      var record = this._findWithTable(model, table);
+
+      if (record) {
+        record.update(model.toJSON());
+      } else {
+        record = table.insert(model.toJSON());
+      }
+
+      return record;
+    },
+
+    _findWithTable: function(model, table) {
         var params = {},
             record;
         if (model.isNew()) {
@@ -131,6 +140,27 @@
 
           return record;
         }
+    },
+
+    _findAllWithTable: function(table) {
+      var result = _.map(table.query(), Backbone.DropboxDatastore.recordToJson);
+      return result;
+    },
+
+    _destroyWithTable: function(model, table) {
+      var record = this._findWithTable(model, table);
+      if (record) {
+        record.deleteRecord();
+      }
+      return {};
+    },
+
+    _throwIfNotFound: function(record) {
+      if (!record) {
+        throw new Error('Record not found');
+      }
+
+      return record;
     },
 
     _startListenToChangeStatus: function(datastore) {
@@ -153,33 +183,31 @@
   // Static methods of DropboxDatastore
   _.extend(Backbone.DropboxDatastore, {
 
-    _datastores: {},
+    _datastorePromises: {},
 
-    getDatastore: function(datastoreId, callback) {
-      var datastore = this._datastores[datastoreId],
-          onOpenDatastore;
+    getDatastore: function(datastoreId) {
+      var datastorePromise = this._datastorePromises[datastoreId];
 
-      if(datastore) {
-
-        // To be consistent to async nature of this method defers invoking
-        // of the function using Underscore defer
-        _.defer(callback, datastore);
-      } else {
-        // Bind and partial applying _onOpenDatastore by callback
-        onOpenDatastore = _.bind(this._onOpenDatastore, this, datastoreId, callback);
-
-        // we can open only one instance of Datastore simultaneously
-        this.getDatastoreManager()._getOrCreateDatastoreByDsid(datastoreId, onOpenDatastore);
+      if (!datastorePromise) {
+        datastorePromise = this._createDatastorePromise(datastoreId);
+        this._datastorePromises[datastoreId] = datastorePromise;
       }
+
+      return datastorePromise;
     },
 
-    _onOpenDatastore: function(datastoreId, callback, error, datastore) {
-      if (error) {
-        throw new Error('Error on _getOrCreateDatastoreByDsid: ' + error.responseText);
-      }
-      // cache opened datastore
-      this._datastores[datastoreId] = datastore;
-      callback(datastore);
+    _createDatastorePromise: function(datastoreId) {
+      var defer = Backbone.$.Deferred();
+
+      this.getDatastoreManager()._getOrCreateDatastoreByDsid(datastoreId, _.bind(function(error, datastore) {
+        if (error) {
+          defer.reject(error);
+        } else {
+          defer.resolve(datastore);
+        }
+      }, this));
+
+      return defer.promise();
     },
 
     getDatastoreManager: function() {
@@ -207,34 +235,28 @@
     // dropboxDatastoreSync delegate to the model or collection's
     // *dropboxDatastore* property, which should be an instance of `Backbone.DropboxDatastore`.
     sync: function(method, model, options) {
-      var store = model.dropboxDatastore || model.collection.dropboxDatastore,
-          syncDfd = Backbone.$.Deferred && Backbone.$.Deferred(), //If $ is having Deferred - use it.
-          syncCallback = _.partial(Backbone.DropboxDatastore._syncCallback, model, options, syncDfd); // partial apply callback with  some attributes
+      var callSuccessHandler = _.partial(Backbone.DropboxDatastore._callSuccessHandler, model, options);
 
-      switch (method) {
-        case 'read':
-          // check if it is a collection or model
-          if (model instanceof Backbone.Collection) {
-            store.findAll(syncCallback);
-          } else {
-            store.find(model, syncCallback);
-          }
-          break;
-        case 'create':
-          store.create(model, syncCallback);
-          break;
-        case 'update':
-          store.update(model, syncCallback);
-          break;
-        case 'delete':
-          store.destroy(model, syncCallback);
-          break;
-      }
-
-      return syncDfd && syncDfd.promise();
+      return Backbone.DropboxDatastore._doSyncMethod(model, method)
+        .then(callSuccessHandler);
     },
 
-    _syncCallback: function(model, options, syncDfd, resp) {
+    _doSyncMethod: function(model, method) {
+      var store = Backbone.DropboxDatastore._getStoreFromModel(model);
+      switch (method) {
+        case 'read':   return (model instanceof Backbone.Collection ? store.findAll() : store.find(model));
+        case 'create': return store.create(model);
+        case 'update': return store.update(model);
+        case 'delete': return store.destroy(model);
+        default: throw new Error('Incorrect Sync method');
+      }
+    },
+
+    _getStoreFromModel: function(model) {
+      return model.dropboxDatastore || model.collection.dropboxDatastore;
+    },
+
+    _callSuccessHandler: function(model, options, resp) {
       if (options && options.success) {
         if (Backbone.VERSION === '0.9.10') {
           options.success(model, resp, options);
@@ -242,9 +264,7 @@
           options.success(resp);
         }
       }
-      if (syncDfd) {
-        syncDfd.resolve(resp);
-      }
+      return resp;
     }
   });
 

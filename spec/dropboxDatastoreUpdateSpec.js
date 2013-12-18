@@ -1,73 +1,91 @@
 describe('Backbone.DropboxDatastore#update', function() {
+  var dropboxDatastore, getTableDefer, resultPromise;
 
-  var dropboxDatastore, modelSpy, callbackSpy;
+  beforeEach(function() {
+    dropboxDatastore = new Backbone.DropboxDatastore('tableName');
+
+    getTableDefer = $.Deferred();
+    getTableDefer.resolve('tableMock');
+    spyOn(dropboxDatastore, 'getTable').andReturn(getTableDefer.promise());
+    spyOn(dropboxDatastore, '_updateWithTable').andReturn('createdRecordMock');
+    spyOn(Backbone.DropboxDatastore, 'recordToJson').andReturn('recordJsonMock');
+    resultPromise = dropboxDatastore.update('modelMock');
+  });
+
+  it('call getTable', function() {
+    expect(dropboxDatastore.getTable).toHaveBeenCalled();
+  });
+
+  it('call _updateWithTable', function() {
+    expect(dropboxDatastore._updateWithTable).toHaveBeenCalledWith('modelMock', 'tableMock');
+  });
+
+  it('call Backbone.DropboxDatastore.recordToJson with found record', function() {
+    expect(Backbone.DropboxDatastore.recordToJson).toHaveBeenCalledWith('createdRecordMock');
+  });
+
+  it('return promise with fields of found record', function() {
+    resultPromise.then(function(result) {
+      expect(result).toBe('recordJsonMock');
+    });
+  });
+});
+
+describe('Backbone.DropboxDatastore#_updateWithTable', function() {
+  var result, dropboxDatastore, modelSpy;
 
   beforeEach(function() {
     dropboxDatastore = new Backbone.DropboxDatastore('tableName');
     modelSpy = jasmine.createSpyObj('model', ['toJSON']);
     modelSpy.toJSON.andReturn('attributesMock');
-    callbackSpy = jasmine.createSpy();
-    spyOn(dropboxDatastore, 'getTable');
   });
+
   describe('when model exists', function() {
     var recordSpy;
+
     beforeEach(function() {
       recordSpy = jasmine.createSpyObj('foundRecord', ['update']);
-      spyOn(dropboxDatastore, '_findRecordSync').andReturn(recordSpy);
-      spyOn(Backbone.DropboxDatastore, 'recordToJson').andReturn('fieldsMock');
+      spyOn(dropboxDatastore, '_findWithTable').andReturn(recordSpy);
 
-      dropboxDatastore.update(modelSpy, callbackSpy);
-
-      // Explicit call callback on success getTable
-      dropboxDatastore.getTable.mostRecentCall.args[0]('tableMock');
+      result = dropboxDatastore._updateWithTable(modelSpy, 'tableMock');
     });
 
-    it('call getTable', function() {
-      expect(dropboxDatastore.getTable).toHaveBeenCalled();
+    it('call #_findWithTable', function() {
+      expect(dropboxDatastore._findWithTable).toHaveBeenCalledWith(modelSpy, 'tableMock');
     });
-    it('call #_findRecordSync', function() {
-      expect(dropboxDatastore._findRecordSync).toHaveBeenCalledWith('tableMock', modelSpy);
-    });
+
     it('call update on found record ', function() {
+      expect(modelSpy.toJSON).toHaveBeenCalled();
       expect(recordSpy.update).toHaveBeenCalledWith('attributesMock');
     });
-    it('call Backbone.DropboxDatastore.recordToJson with updated record', function() {
-      expect(Backbone.DropboxDatastore.recordToJson).toHaveBeenCalledWith(recordSpy);
-    });
-    it('call callback with fields of updated record', function() {
-      expect(callbackSpy).toHaveBeenCalledWith('fieldsMock');
+
+    it('return fields of updated record', function() {
+      expect(result).toBe(recordSpy);
     });
   });
+
   describe('when model does not exist', function() {
     var tableSpy;
+
     beforeEach(function() {
-      spyOn(dropboxDatastore, '_findRecordSync').andReturn(null);
+      spyOn(dropboxDatastore, '_findWithTable').andReturn(null);
       tableSpy = jasmine.createSpyObj('table', ['insert']);
       tableSpy.insert.andReturn('recordMock');
 
-      spyOn(Backbone.DropboxDatastore, 'recordToJson').andReturn('fieldsMock');
-
-      dropboxDatastore.update(modelSpy, callbackSpy);
-
-      // Explicit call callback on success getTable
-      dropboxDatastore.getTable.mostRecentCall.args[0](tableSpy);
+      result = dropboxDatastore._updateWithTable(modelSpy, tableSpy);
     });
 
-    it('call getTable', function() {
-      expect(dropboxDatastore.getTable).toHaveBeenCalled();
+    it('call #_findWithTable', function() {
+      expect(dropboxDatastore._findWithTable).toHaveBeenCalledWith(modelSpy, tableSpy);
     });
-    it('call #_findRecordSync', function() {
-      expect(dropboxDatastore._findRecordSync).toHaveBeenCalledWith(tableSpy, modelSpy);
-    });
+
     it('call insert on table ', function() {
+      expect(modelSpy.toJSON).toHaveBeenCalled();
       expect(tableSpy.insert).toHaveBeenCalledWith('attributesMock');
     });
-    it('call Backbone.DropboxDatastore.recordToJson with inserted record', function() {
-      expect(Backbone.DropboxDatastore.recordToJson).toHaveBeenCalledWith('recordMock');
-    });
-    it('call callback with fields of updated record', function() {
-      expect(callbackSpy).toHaveBeenCalledWith('fieldsMock');
+
+    it('result fields of updated record', function() {
+      expect(result).toBe('recordMock');
     });
   });
-
 });

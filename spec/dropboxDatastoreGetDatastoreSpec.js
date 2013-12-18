@@ -1,70 +1,56 @@
 describe('Backbone.DropboxDatastore.getDatastore', function() {
-  var datastoreManagerSpy, callbackSpy;
+  var result;
 
   beforeEach(function() {
-    datastoreManagerSpy = jasmine.createSpyObj('datastoreManager', ['_getOrCreateDatastoreByDsid']);
-    spyOn(Backbone.DropboxDatastore, 'getDatastoreManager').andReturn(datastoreManagerSpy);
-    callbackSpy = jasmine.createSpy('callback');
+    spyOn(Backbone.DropboxDatastore, '_createDatastorePromise');
   });
 
-  describe('if datastore is opened', function() {
+  describe('if there is stored promise for passed datastoreId', function() {
     beforeEach(function() {
-      Backbone.DropboxDatastore._datastores = {
-        datastoreIdMock:'storedDatastoreMock'
+      Backbone.DropboxDatastore._datastorePromises = {
+        datastoreIdMock:'storedDatastorePromiseMock'
       };
 
-      runs(function() {
-        Backbone.DropboxDatastore.getDatastore('datastoreIdMock', callbackSpy);
-      });
-      waitsFor(function() {
-        return callbackSpy.calls.length;
-      }, 'The callback should be called.', 10);
+      result = Backbone.DropboxDatastore.getDatastore('datastoreIdMock');
     });
 
-    it('do not call _getOrCreateDatastoreByDsid on datastoreManager', function() {
-      expect(datastoreManagerSpy._getOrCreateDatastoreByDsid).not.toHaveBeenCalled();
+    it('returns stored promise', function() {
+      expect(result).toBe('storedDatastorePromiseMock');
     });
 
-    it('call callback with stored default Datastore', function() {
-      expect(callbackSpy).toHaveBeenCalledWith('storedDatastoreMock');
+    it('do not call _createDatastorePromise on DropboxDatastore', function() {
+      expect(Backbone.DropboxDatastore._createDatastorePromise).not.toHaveBeenCalled();
     });
-
   });
 
   describe('if datastore is not opened', function() {
     beforeEach(function() {
-      Backbone.DropboxDatastore._datastores = {};
-      Backbone.DropboxDatastore.getDatastore('datastoreIdMock', callbackSpy);
+      Backbone.DropboxDatastore._datastorePromises = {};
+      Backbone.DropboxDatastore._createDatastorePromise.andReturn('datastorePromiseMock');
+
+      result = Backbone.DropboxDatastore.getDatastore('datastoreIdMock');
     });
 
-    it('call _getOrCreateDatastoreByDsid on datastoreManager', function() {
-      expect(datastoreManagerSpy._getOrCreateDatastoreByDsid).toHaveBeenCalledWith(
-        'datastoreIdMock',
-        jasmine.any(Function)
-      );
+    it('call _createDatastorePromise on DropboxDatastore', function() {
+      expect(Backbone.DropboxDatastore._createDatastorePromise).toHaveBeenCalledWith('datastoreIdMock');
     });
 
-    describe('if _getOrCreateDatastoreByDsid processed with error', function() {
-      it('throw an error', function() {
-        expect(function() {
-          datastoreManagerSpy._getOrCreateDatastoreByDsid.mostRecentCall.args[1]('errorMock', null);
-        }).toThrow();
-      });
+    it('store result of _createDatastorePromise on DropboxDatastore to _datastorePromises', function() {
+      expect(Backbone.DropboxDatastore._datastorePromises.datastoreIdMock).toBe('datastorePromiseMock');
     });
 
-    describe('if _getOrCreateDatastoreByDsid processed without errors', function() {
-
-      beforeEach(function() {
-        datastoreManagerSpy._getOrCreateDatastoreByDsid.mostRecentCall.args[1](null, 'datastoreMock');
-      });
-
-      it('store returned Datastore and call callback with stored Datastore', function() {
-        expect(callbackSpy).toHaveBeenCalledWith('datastoreMock');
-        expect(Backbone.DropboxDatastore._datastores.datastoreIdMock).toBe('datastoreMock');
-      });
-
+    it('returns result of _createDatastorePromise on DropboxDatastore', function() {
+      expect(result).toBe('datastorePromiseMock');
     });
-
   });
 });
 
+describe('Backbone.DropboxDatastore._createDatastorePromise', function() {
+  var datastoreManagerSpy;
+
+  beforeEach(function() {
+    datastoreManagerSpy = jasmine.createSpyObj('datastoreManager', ['_getOrCreateDatastoreByDsid']);
+    spyOn(Backbone.DropboxDatastore, 'getDatastoreManager').andReturn(datastoreManagerSpy);
+  });
+
+});

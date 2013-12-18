@@ -1,72 +1,76 @@
 describe('Backbone.DropboxDatastore#getTable', function() {
-
-  var dropboxDatastore, callbackSpy, datastoreSpy;
+  var result, dropboxDatastore;
 
   beforeEach(function() {
     dropboxDatastore = new Backbone.DropboxDatastore('tableName');
-    callbackSpy = jasmine.createSpy('callback');
-    datastoreSpy = jasmine.createSpyObj('datastore', ['getTable']);
+    spyOn(dropboxDatastore, '_createTablePromise').andReturn('createdTablePromiseMock');
+  });
+
+  describe('if there is not stored _tablePromise', function() {
+    beforeEach(function() {
+      result = dropboxDatastore.getTable();
+    });
+
+    it('call _createTablePromise', function() {
+      expect(dropboxDatastore._createTablePromise).toHaveBeenCalled();
+    });
+
+    it('store created table promise', function() {
+      expect(dropboxDatastore._tablePromise).toBe('createdTablePromiseMock');
+    });
+
+    it('return created table promise', function() {
+      expect(result).toBe('createdTablePromiseMock');
+    });
+  });
+
+  describe('if there is stored _tablePromise', function() {
+    beforeEach(function() {
+      dropboxDatastore._tablePromise = 'storedTablePromiseMock';
+
+      result = dropboxDatastore.getTable();
+    });
+
+    it('do not call _createTablePromise', function() {
+      expect(dropboxDatastore._createTablePromise).not.toHaveBeenCalled();
+    });
+
+    it('return stored table promise', function() {
+      expect(result).toBe('storedTablePromiseMock');
+    });
+  });
+});
+
+describe('Backbone.DropboxDatastore#_createTablePromise', function() {
+  var resultPromise, dropboxDatastore, datastoreSpy;
+
+  beforeEach(function() {
+    var datastoreDefer = $.Deferred();
+    dropboxDatastore = new Backbone.DropboxDatastore('tableName');
+    datastoreSpy = jasmine.createSpyObj('datastoreSpy', ['getTable']);
     datastoreSpy.getTable.andReturn('tableMock');
-    spyOn(Backbone.DropboxDatastore, 'getDatastore');
+    datastoreDefer.resolve(datastoreSpy);
+    spyOn(Backbone.DropboxDatastore, 'getDatastore').andReturn(datastoreDefer);
+    spyOn(dropboxDatastore, '_startListenToChangeStatus');
+
+    resultPromise = dropboxDatastore._createTablePromise();
   });
 
-  describe('if table is stored', function() {
-
-    beforeEach(function() {
-      dropboxDatastore.getTable(callbackSpy);
-    });
-
-    it('call getDatastore on Backbone.DropboxDatastore', function() {
-      expect(Backbone.DropboxDatastore.getDatastore).toHaveBeenCalledWith(
-        dropboxDatastore.datastoreId,
-        jasmine.any(Function)
-      );
-    });
-
-    describe('when callback called', function() {
-
-      beforeEach(function() {
-        spyOn(dropboxDatastore, '_startListenToChangeStatus');
-        // Explicit call callback because we stub getDatastore
-        Backbone.DropboxDatastore.getDatastore.mostRecentCall.args[1](datastoreSpy);
-      });
-
-      it('store returned Datastore', function() {
-        expect(dropboxDatastore._table).toBe('tableMock');
-      });
-
-      it('call _startListenToChangeStatus with datastore', function() {
-        expect(dropboxDatastore._startListenToChangeStatus).toHaveBeenCalledWith(datastoreSpy);
-      });
-
-      it('call callback with stored Datastore', function() {
-        expect(callbackSpy).toHaveBeenCalledWith('tableMock');
-      });
-
-    });
-
+  it('call getDatastore on Backbone.DropboxDatastore', function() {
+    expect(Backbone.DropboxDatastore.getDatastore).toHaveBeenCalledWith('default');
   });
 
-  describe('if table is not stored', function() {
-
-    beforeEach(function() {
-      dropboxDatastore._table = 'storedTableMock';
-      runs(function() {
-        dropboxDatastore.getTable(callbackSpy);
-      });
-      waitsFor(function() {
-        return callbackSpy.calls.length;
-      }, 'The callback should be called.', 10);
-    });
-
-    it('do not call getDatastore on Backbone.DropboxDatastore', function() {
-      expect(Backbone.DropboxDatastore.getDatastore).not.toHaveBeenCalled();
-    });
-
-    it('call callback with stored Datastore', function() {
-      expect(callbackSpy).toHaveBeenCalledWith('storedTableMock');
-    });
-
+  it('call _startListenToChangeStatus', function() {
+    expect(dropboxDatastore._startListenToChangeStatus).toHaveBeenCalledWith(datastoreSpy);
   });
 
+  it('call getTable on datastore', function() {
+    expect(datastoreSpy.getTable).toHaveBeenCalledWith('tableName');
+  });
+
+  it('return promise resolved by table', function() {
+    resultPromise.then(function(result) {
+      expect(result).toBe('tableMock');
+    });
+  });
 });

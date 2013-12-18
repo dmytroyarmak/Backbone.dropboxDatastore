@@ -1,60 +1,76 @@
 describe('Backbone.DropboxDatastore#destroy', function() {
+  var resultPromise, dropboxDatastore, getTableDefer;
 
-  var dropboxDatastore, modelSpy, callbackSpy;
+  beforeEach(function() {
+    dropboxDatastore = new Backbone.DropboxDatastore('tableName');
+
+    getTableDefer = $.Deferred();
+    getTableDefer.resolve('tableMock');
+    spyOn(dropboxDatastore, 'getTable').andReturn(getTableDefer.promise());
+    spyOn(dropboxDatastore, '_destroyWithTable').andReturn('destroyedMock');
+
+    resultPromise = dropboxDatastore.destroy('modelMock');
+  });
+
+  it('call getTable', function() {
+    expect(dropboxDatastore.getTable).toHaveBeenCalled();
+  });
+
+  it('call _destroyWithTable with table', function() {
+    expect(dropboxDatastore._destroyWithTable).toHaveBeenCalledWith('modelMock', 'tableMock');
+  });
+
+  it('return promise with result of _destroyWithTable', function() {
+    resultPromise.then(function(result) {
+      expect(result).toBe('destroyedMock');
+    });
+  });
+});
+
+describe('Backbone.DropboxDatastore#_destroyWithTable', function() {
+  var result, dropboxDatastore, modelSpy;
 
   beforeEach(function() {
     dropboxDatastore = new Backbone.DropboxDatastore('tableName');
     modelSpy = jasmine.createSpyObj('model', ['toJSON']);
     modelSpy.toJSON.andReturn('attributesMock');
-    callbackSpy = jasmine.createSpy();
-    spyOn(dropboxDatastore, 'getTable');
   });
 
   describe('when model exists', function() {
     var recordSpy;
     beforeEach(function() {
       recordSpy = jasmine.createSpyObj('foundRecord', ['deleteRecord']);
-      spyOn(dropboxDatastore, '_findRecordSync').andReturn(recordSpy);
+      spyOn(dropboxDatastore, '_findWithTable').andReturn(recordSpy);
 
-      dropboxDatastore.destroy(modelSpy, callbackSpy);
-
-      // Explicit call callback on success getTable
-      dropboxDatastore.getTable.mostRecentCall.args[0]('tableMock');
+      result = dropboxDatastore._destroyWithTable(modelSpy, 'tableMock');
     });
 
-    it('call getTable', function() {
-      expect(dropboxDatastore.getTable).toHaveBeenCalled();
+    it('call #_findWithTable', function() {
+      expect(dropboxDatastore._findWithTable).toHaveBeenCalledWith(modelSpy, 'tableMock');
     });
-    it('call #_findRecordSync', function() {
-      expect(dropboxDatastore._findRecordSync).toHaveBeenCalledWith('tableMock', modelSpy);
-    });
+
     it('call deleteRecord on found record ', function() {
       expect(recordSpy.deleteRecord).toHaveBeenCalledWith();
     });
 
-    it('call callback with empty object', function() {
-      expect(callbackSpy).toHaveBeenCalledWith({});
+    it('return empty object', function() {
+      expect(result).toEqual({});
     });
   });
+
   describe('when model does not exist', function() {
     beforeEach(function() {
-      spyOn(dropboxDatastore, '_findRecordSync').andReturn(null);
+      spyOn(dropboxDatastore, '_findWithTable').andReturn(null);
 
-      dropboxDatastore.destroy(modelSpy, callbackSpy);
-
-      // Explicit call callback on success getTable
-      dropboxDatastore.getTable.mostRecentCall.args[0]('tableMock');
+      dropboxDatastore._destroyWithTable(modelSpy, 'tableMock');
     });
 
-    it('call getTable', function() {
-      expect(dropboxDatastore.getTable).toHaveBeenCalled();
-    });
-    it('call #_findRecordSync', function() {
-      expect(dropboxDatastore._findRecordSync).toHaveBeenCalledWith('tableMock', modelSpy);
+    it('call #_findWithTable', function() {
+      expect(dropboxDatastore._findWithTable).toHaveBeenCalledWith(modelSpy, 'tableMock');
     });
 
-    it('call callback with empty object', function() {
-      expect(callbackSpy).toHaveBeenCalledWith({});
+    it('return empty object', function() {
+      expect(result).toEqual({});
     });
   });
 });

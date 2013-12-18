@@ -1,330 +1,185 @@
 describe('Backbone.DropboxDatastore.sync', function() {
-  var result, datastoreSpy;
-  describe('for collection', function() {
-    var collection;
-    beforeEach(function() {
-      datastoreSpy = jasmine.createSpyObj('datastore', ['findAll']);
-      collection = new Backbone.Collection();
-      collection.dropboxDatastore = datastoreSpy;
+  var resultPromise;
+
+  beforeEach(function() {
+    var defer = $.Deferred();
+    defer.resolve('responseMock');
+    spyOn(Backbone.DropboxDatastore, '_doSyncMethod').andReturn(defer);
+    spyOn(Backbone.DropboxDatastore, '_callSuccessHandler').andReturn('responseAfterSuccessCallbackMock');
+
+    resultPromise = Backbone.DropboxDatastore.sync('methodMock', 'modelMock', 'optionMock');
+  });
+
+  it('call _doSyncMethod', function() {
+    expect(Backbone.DropboxDatastore._doSyncMethod).toHaveBeenCalledWith('modelMock', 'methodMock');
+  });
+
+  it('call _callSuccessHandler with response', function() {
+    expect(Backbone.DropboxDatastore._callSuccessHandler).toHaveBeenCalledWith('modelMock', 'optionMock', 'responseMock');
+  });
+
+  it('return promise resolved by response', function() {
+    resultPromise.then(function(result) {
+      expect(result).toBe('responseAfterSuccessCallbackMock');
     });
-    describe('method equal read', function() {
+  });
+});
+
+describe('Backbone.DropboxDatastore._doSyncMethod', function() {
+  var result, storeSpy;
+
+  beforeEach(function() {
+    storeSpy = jasmine.createSpyObj('store', ['findAll', 'find', 'create', 'update', 'destroy']);
+    storeSpy.findAll.andReturn('findAllResultMock');
+    storeSpy.find.andReturn('findResultMock');
+    storeSpy.create.andReturn('createResultMock');
+    storeSpy.update.andReturn('updateResultMock');
+    storeSpy.destroy.andReturn('destroyResultMock');
+
+    spyOn(Backbone.DropboxDatastore, '_getStoreFromModel').andReturn(storeSpy);
+  });
+
+  describe('for collection', function() {
+    describe('when method is read', function() {
       beforeEach(function() {
-        spyOn(_, 'partial').andReturn('partialAppliedSyncCallbackMock');
+        var collection = new Backbone.Collection();
+        result = Backbone.DropboxDatastore._doSyncMethod(collection, 'read');
       });
-      describe('there is Deferred method on Backbone.$', function() {
-        var deferredSpy;
-        beforeEach(function() {
-          deferredSpy = jasmine.createSpyObj('deferred', ['promise']);
-          deferredSpy.promise.andReturn('promiseMock');
-          Backbone.$ = {
-            Deferred: jasmine.createSpy('Deferred').andReturn(deferredSpy)
-          };
 
-          result = Backbone.DropboxDatastore.sync('read', collection, 'optionsMock');
-        });
-        it('create Deferred object', function() {
-          expect(Backbone.$.Deferred).toHaveBeenCalled();
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, collection, 'optionsMock', deferredSpy);
-        });
-        it('call findAll on dropboxDatastore with partial applied syncCallback', function() {
-          expect(datastoreSpy.findAll).toHaveBeenCalledWith('partialAppliedSyncCallbackMock');
-        });
-        it('return promise of Deferred object', function() {
-          expect(result).toBe('promiseMock');
-        });
+      it('call findAll', function() {
+        expect(storeSpy.findAll).toHaveBeenCalledWith();
       });
-      describe('there is no Deferred method on Backbone.$', function() {
-        beforeEach(function() {
-          Backbone.$ = {};
 
-          result = Backbone.DropboxDatastore.sync('read', collection, 'optionsMock');
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, collection, 'optionsMock', undefined);
-        });
-        it('call findAll on dropboxDatastore with partial applied syncCallback', function() {
-          expect(datastoreSpy.findAll).toHaveBeenCalledWith('partialAppliedSyncCallbackMock');
-        });
-        it('return undefined', function() {
-          expect(result).toBeUndefined();
-        });
+      it('return result of findAll', function() {
+        expect(result).toBe('findAllResultMock');
       });
     });
   });
 
   describe('for model', function() {
-    var model;
-    beforeEach(function() {
-      datastoreSpy = jasmine.createSpyObj('datastore', ['find', 'create', 'update', 'destroy']);
-      model = new Backbone.Model();
-      model.collection = {
-        dropboxDatastore: datastoreSpy
-      };
-    });
-    describe('method equal read', function() {
+    describe('when method is read', function() {
       beforeEach(function() {
-        spyOn(_, 'partial').andReturn('partialAppliedSyncCallbackMock');
+        result = Backbone.DropboxDatastore._doSyncMethod('modelMock', 'read');
       });
-      describe('there is Deferred method on Backbone.$', function() {
-        var deferredSpy;
-        beforeEach(function() {
-          deferredSpy = jasmine.createSpyObj('deferred', ['promise']);
-          deferredSpy.promise.andReturn('promiseMock');
-          Backbone.$ = {
-            Deferred: jasmine.createSpy('Deferred').andReturn(deferredSpy)
-          };
 
-          result = Backbone.DropboxDatastore.sync('read', model, 'optionsMock');
-        });
-        it('create Deferred object', function() {
-          expect(Backbone.$.Deferred).toHaveBeenCalled();
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, model, 'optionsMock', deferredSpy);
-        });
-        it('call find on dropboxDatastore with model and partial applied syncCallback', function() {
-          expect(datastoreSpy.find).toHaveBeenCalledWith(model, 'partialAppliedSyncCallbackMock');
-        });
-        it('return promise of Deferred object', function() {
-          expect(result).toBe('promiseMock');
-        });
+      it('call find', function() {
+        expect(storeSpy.find).toHaveBeenCalledWith('modelMock');
       });
-      describe('there is no Deferred method on Backbone.$', function() {
-        beforeEach(function() {
-          Backbone.$ = {};
 
-          result = Backbone.DropboxDatastore.sync('read', model, 'optionsMock');
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, model, 'optionsMock', undefined);
-        });
-        it('call find on dropboxDatastore with model and partial applied syncCallback', function() {
-          expect(datastoreSpy.find).toHaveBeenCalledWith(model, 'partialAppliedSyncCallbackMock');
-        });
-        it('return undefined', function() {
-          expect(result).toBeUndefined();
-        });
+      it('return result of find', function() {
+        expect(result).toBe('findResultMock');
       });
     });
 
-    describe('method equal create', function() {
+    describe('when method is create', function() {
       beforeEach(function() {
-        spyOn(_, 'partial').andReturn('partialAppliedSyncCallbackMock');
+        result = Backbone.DropboxDatastore._doSyncMethod('modelMock', 'create');
       });
-      describe('there is Deferred method on Backbone.$', function() {
-        var deferredSpy;
-        beforeEach(function() {
-          deferredSpy = jasmine.createSpyObj('deferred', ['promise']);
-          deferredSpy.promise.andReturn('promiseMock');
-          Backbone.$ = {
-            Deferred: jasmine.createSpy('Deferred').andReturn(deferredSpy)
-          };
 
-          result = Backbone.DropboxDatastore.sync('create', model, 'optionsMock');
-        });
-        it('create Deferred object', function() {
-          expect(Backbone.$.Deferred).toHaveBeenCalled();
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, model, 'optionsMock', deferredSpy);
-        });
-        it('call create on dropboxDatastore with model and partial applied syncCallback', function() {
-          expect(datastoreSpy.create).toHaveBeenCalledWith(model, 'partialAppliedSyncCallbackMock');
-        });
-        it('return promise of Deferred object', function() {
-          expect(result).toBe('promiseMock');
-        });
+      it('call create', function() {
+        expect(storeSpy.create).toHaveBeenCalledWith('modelMock');
       });
-      describe('there is no Deferred method on Backbone.$', function() {
-        beforeEach(function() {
-          Backbone.$ = {};
 
-          result = Backbone.DropboxDatastore.sync('create', model, 'optionsMock');
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, model, 'optionsMock', undefined);
-        });
-        it('call create on dropboxDatastore with model and partial applied syncCallback', function() {
-          expect(datastoreSpy.create).toHaveBeenCalledWith(model, 'partialAppliedSyncCallbackMock');
-        });
-        it('return undefined', function() {
-          expect(result).toBeUndefined();
-        });
+      it('return result of create', function() {
+        expect(result).toBe('createResultMock');
       });
     });
 
-    describe('method equal update', function() {
+    describe('when method is update', function() {
       beforeEach(function() {
-        spyOn(_, 'partial').andReturn('partialAppliedSyncCallbackMock');
+        result = Backbone.DropboxDatastore._doSyncMethod('modelMock', 'update');
       });
-      describe('there is Deferred method on Backbone.$', function() {
-        var deferredSpy;
-        beforeEach(function() {
-          deferredSpy = jasmine.createSpyObj('deferred', ['promise']);
-          deferredSpy.promise.andReturn('promiseMock');
-          Backbone.$ = {
-            Deferred: jasmine.createSpy('Deferred').andReturn(deferredSpy)
-          };
 
-          result = Backbone.DropboxDatastore.sync('update', model, 'optionsMock');
-        });
-        it('create Deferred object', function() {
-          expect(Backbone.$.Deferred).toHaveBeenCalled();
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, model, 'optionsMock', deferredSpy);
-        });
-        it('call update on dropboxDatastore with model and partial applied syncCallback', function() {
-          expect(datastoreSpy.update).toHaveBeenCalledWith(model, 'partialAppliedSyncCallbackMock');
-        });
-        it('return promise of Deferred object', function() {
-          expect(result).toBe('promiseMock');
-        });
+      it('call update', function() {
+        expect(storeSpy.update).toHaveBeenCalledWith('modelMock');
       });
-      describe('there is no Deferred method on Backbone.$', function() {
-        beforeEach(function() {
-          Backbone.$ = {};
 
-          result = Backbone.DropboxDatastore.sync('update', model, 'optionsMock');
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, model, 'optionsMock', undefined);
-        });
-        it('call update on dropboxDatastore with model and partial applied syncCallback', function() {
-          expect(datastoreSpy.update).toHaveBeenCalledWith(model, 'partialAppliedSyncCallbackMock');
-        });
-        it('return undefined', function() {
-          expect(result).toBeUndefined();
-        });
+      it('return result of update', function() {
+        expect(result).toBe('updateResultMock');
       });
     });
 
-    describe('method equal delete', function() {
+    describe('when method is delete', function() {
       beforeEach(function() {
-        spyOn(_, 'partial').andReturn('partialAppliedSyncCallbackMock');
+        result = Backbone.DropboxDatastore._doSyncMethod('modelMock', 'delete');
       });
-      describe('there is Deferred method on Backbone.$', function() {
-        var deferredSpy;
-        beforeEach(function() {
-          deferredSpy = jasmine.createSpyObj('deferred', ['promise']);
-          deferredSpy.promise.andReturn('promiseMock');
-          Backbone.$ = {
-            Deferred: jasmine.createSpy('Deferred').andReturn(deferredSpy)
-          };
 
-          result = Backbone.DropboxDatastore.sync('delete', model, 'optionsMock');
-        });
-        it('create Deferred object', function() {
-          expect(Backbone.$.Deferred).toHaveBeenCalled();
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, model, 'optionsMock', deferredSpy);
-        });
-        it('call destroy on dropboxDatastore with model and partial applied syncCallback', function() {
-          expect(datastoreSpy.destroy).toHaveBeenCalledWith(model, 'partialAppliedSyncCallbackMock');
-        });
-        it('return promise of Deferred object', function() {
-          expect(result).toBe('promiseMock');
-        });
+      it('call destroy', function() {
+        expect(storeSpy.destroy).toHaveBeenCalledWith('modelMock');
       });
-      describe('there is no Deferred method on Backbone.$', function() {
-        beforeEach(function() {
-          Backbone.$ = {};
 
-          result = Backbone.DropboxDatastore.sync('delete', model, 'optionsMock');
-        });
-        it('partial apply _syncCallback', function() {
-          expect(_.partial).toHaveBeenCalledWith(Backbone.DropboxDatastore._syncCallback, model, 'optionsMock', undefined);
-        });
-        it('call destroy on dropboxDatastore with model and partial applied syncCallback', function() {
-          expect(datastoreSpy.destroy).toHaveBeenCalledWith(model, 'partialAppliedSyncCallbackMock');
-        });
-        it('return undefined', function() {
-          expect(result).toBeUndefined();
-        });
+      it('return result of destroy', function() {
+        expect(result).toBe('destroyResultMock');
+      });
+    });
+
+    describe('when method is incorrect', function() {
+      it('throw error', function() {
+        expect(function() {
+          Backbone.DropboxDatastore._doSyncMethod('modelMock', 'incorrectMethod');
+        }).toThrow();
       });
     });
   });
+
 });
 
-describe('_syncCallback', function() {
-  var options;
+describe('Backbone.DropboxDatastore._getStoreFromModel', function() {
+  var result;
+
+  it('return store of model if model have dropboxDatastore', function() {
+    var model = {dropboxDatastore: 'modelsStoreMock'};
+
+    result = Backbone.DropboxDatastore._getStoreFromModel(model);
+
+    expect(result).toBe('modelsStoreMock');
+  });
+
+  it('return store of collection if model have not dropboxDatastore but collection have', function() {
+    var model = {collection: {dropboxDatastore: 'collectionsStoreMock'}};
+
+    result = Backbone.DropboxDatastore._getStoreFromModel(model);
+
+    expect(result).toBe('collectionsStoreMock');
+  });
+});
+
+describe('Backbone.DropboxDatastore._callSuccessHandler', function() {
+  var result, options;
+
   describe('options.success is passed', function() {
     beforeEach(function() {
       options = {success: jasmine.createSpy('successCallback')};
     });
+
     describe('Backbone.VERSION is 0.9.10', function() {
       beforeEach(function() {
         Backbone.VERSION = '0.9.10';
+        Backbone.DropboxDatastore._callSuccessHandler('modelMock', options, 'respMock');
       });
-      describe('syncDfd is passed', function() {
-        var deferredSpy;
-        beforeEach(function() {
-          deferredSpy = jasmine.createSpyObj('deferred', ['resolve']);
-          Backbone.DropboxDatastore._syncCallback('modelMock', options, deferredSpy, 'respMock');
-        });
-        it('call callback with 3 params', function() {
-          expect(options.success).toHaveBeenCalledWith('modelMock', 'respMock', options);
-        });
-        it('call resolve on syncDfd', function() {
-          expect(deferredSpy.resolve).toHaveBeenCalledWith('respMock');
-        });
-      });
-      describe('syncDfd is not passed', function() {
-        beforeEach(function() {
-          Backbone.DropboxDatastore._syncCallback('modelMock', options, null, 'respMock');
-        });
-        it('call callback with 3 params', function() {
-          expect(options.success).toHaveBeenCalledWith('modelMock', 'respMock', options);
-        });
+
+      it('call callback with 3 params', function() {
+        expect(options.success).toHaveBeenCalledWith('modelMock', 'respMock', options);
       });
     });
+
     describe('Backbone.VERSION is not 0.9.10', function() {
       beforeEach(function() {
         Backbone.VERSION = '1.0.0';
+        Backbone.DropboxDatastore._callSuccessHandler('modelMock', options, 'respMock');
       });
-      describe('syncDfd is passed', function() {
-        var deferredSpy;
-        beforeEach(function() {
-          deferredSpy = jasmine.createSpyObj('deferred', ['resolve']);
-          Backbone.DropboxDatastore._syncCallback('modelMock', options, deferredSpy, 'respMock');
-        });
-        it('call callback with 1 param', function() {
-          expect(options.success).toHaveBeenCalledWith('respMock');
-        });
-        it('call resolve on syncDfd', function() {
-          expect(deferredSpy.resolve).toHaveBeenCalledWith('respMock');
-        });
-      });
-      describe('syncDfd is not passed', function() {
-        beforeEach(function() {
-          Backbone.DropboxDatastore._syncCallback('modelMock', options, null, 'respMock');
-        });
-        it('call callback with 1 param', function() {
-          expect(options.success).toHaveBeenCalledWith('respMock');
-        });
+
+      it('call callback with 1 param', function() {
+        expect(options.success).toHaveBeenCalledWith('respMock');
       });
     });
   });
 
   describe('options.success is not passed', function() {
-    describe('syncDfd is passed', function() {
-      var deferredSpy;
-      beforeEach(function() {
-        deferredSpy = jasmine.createSpyObj('deferred', ['resolve']);
-        Backbone.DropboxDatastore._syncCallback('modelMock', {}, deferredSpy, 'respMock');
-      });
-      it('call resolve on syncDfd', function() {
-        expect(deferredSpy.resolve).toHaveBeenCalledWith('respMock');
-      });
-    });
-    describe('syncDfd is not passed', function() {
-      beforeEach(function() {
-        Backbone.DropboxDatastore._syncCallback('modelMock', {}, null, 'respMock');
-        it('do nothing');
-      });
+    it('return response', function() {
+      result = Backbone.DropboxDatastore._callSuccessHandler('modelMock', {}, 'responseMock');
+
+      expect(result).toBe('responseMock');
     });
   });
 });
