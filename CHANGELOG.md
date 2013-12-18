@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 - Dec 18, 2013
+- rewrite library using $.Deferred
+- fix bug with concurrent opening of few datastores
+
 ## 0.4.0 - Oct 17, 2013
 - add ability to get current sync status of dropboxDatastore object
 - add change status event to dropboxDatastore object

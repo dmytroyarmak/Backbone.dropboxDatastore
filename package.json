@@ -1,7 +1,7 @@
 {
   "name": "backbone.dropboxdatastore",
   "description": "Backbone Dropbox Datastore API adapter",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "keywords": [
     "backbone",
     "dropbox",
