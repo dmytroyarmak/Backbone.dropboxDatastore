@@ -28,10 +28,15 @@
     options = options || {};
     this.name = name;
     this.datastoreId = options.datastoreId || 'default';
+    this._syncCollection = null;
   };
 
   // Instance methods of DropboxDatastore
   _.extend(Backbone.DropboxDatastore.prototype, Backbone.Events, {
+
+    syncCollection: function(collection) {
+      this._syncCollection = collection;
+    },
 
     // Insert new record to *Dropbox.Datastore.Table*.
     create: function(model) {
@@ -99,6 +104,7 @@
     close: function() {
       if (this._table) {
         this._stopListenToChangeStatus(this._table._datastore);
+        this._stopListenToChangeRecords(this._table._datastore);
       }
     },
 
@@ -106,6 +112,7 @@
       return Backbone.DropboxDatastore.getDatastore(this.datastoreId).then(_.bind(function(datastore) {
         var table = datastore.getTable(this.name);
         this._startListenToChangeStatus(datastore);
+        this._startListenToChangeRecords(datastore);
         this._table = table;
         return table;
       }, this));
@@ -170,6 +177,11 @@
       datastore.syncStatusChanged.addListener(this._changeStatusListener);
     },
 
+    _startListenToChangeRecords: function(datastore) {
+      this._changeRecordsListener = _.bind(this._onChangeRecords, this);
+      datastore.recordsChanged.addListener(this._changeRecordsListener);
+    },
+
     _stopListenToChangeStatus: function(datastore) {
       if (this._changeStatusListener) {
         datastore.syncStatusChanged.removeListener(this._changeStatusListener);
@@ -177,8 +189,25 @@
       }
     },
 
+    _stopListenToChangeRecords: function(datastore) {
+      if (this._changeRecordsListener) {
+        datastore.recordsChanged.removeListener(this._changeRecordsListener);
+        delete this._changeRecordsListener;
+      }
+    },
+
     _onChangeStatus: function() {
       this.trigger('change:status', this.getStatus(), this);
+    },
+
+    _onChangeRecords: function(changes) {
+      var changedRecords;
+      if (this._syncCollection) {
+        changedRecords = Backbone.DropboxDatastore.getChangesForTable(this.name, changes);
+
+        // Update collection deferred to prevent double copy of same model in local collection
+        _.defer(Backbone.DropboxDatastore.updateCollectionWithChanges, this._syncCollection, changedRecords);
+      }
     }
   });
 
@@ -232,6 +261,28 @@
       return _.extend(record.getFields(), {
         id: record.getId()
       });
+    },
+
+    getChangesForTable: function(tableName, changes) {
+      var records = {
+        toRemove: [],
+        toAdd: []
+      };
+
+      _.each(changes.affectedRecordsForTable(tableName), function(changedRecord) {
+        if (changedRecord.isDeleted()) {
+          records.toRemove.push(changedRecord.getId());
+        } else {
+          records.toAdd.push(Backbone.DropboxDatastore.recordToJson(changedRecord));
+        }
+      });
+
+      return records;
+    },
+
+    updateCollectionWithChanges: function(syncCollection, changedRecords) {
+      syncCollection.add(changedRecords.toAdd, {merge: true});
+      syncCollection.remove(changedRecords.toRemove);
     },
 
     // dropboxDatastoreSync delegate to the model or collection's
