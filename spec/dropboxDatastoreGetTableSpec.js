@@ -68,6 +68,10 @@ describe('Backbone.DropboxDatastore#_createTablePromise', function() {
     expect(datastoreSpy.getTable).toHaveBeenCalledWith('tableName');
   });
 
+  it('store table in _table when resolve', function() {
+    expect(dropboxDatastore._table).toBe('tableMock');
+  });
+
   it('return promise resolved by table', function() {
     resultPromise.then(function(result) {
       expect(result).toBe('tableMock');

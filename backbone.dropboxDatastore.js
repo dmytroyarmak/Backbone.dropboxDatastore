@@ -104,8 +104,10 @@
 
     _createTablePromise: function() {
       return Backbone.DropboxDatastore.getDatastore(this.datastoreId).then(_.bind(function(datastore) {
+        var table = datastore.getTable(this.name);
         this._startListenToChangeStatus(datastore);
-        return datastore.getTable(this.name);
+        this._table = table;
+        return table;
       }, this));
     },
 
