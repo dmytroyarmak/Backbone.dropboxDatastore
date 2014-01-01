@@ -1,4 +1,4 @@
-# Backbone Dropbox Datastore Adapter v0.4.1
+# Backbone Dropbox Datastore Adapter v0.4.2
 
 [![Build Status](https://secure.travis-ci.org/dmytroyarmak/Backbone.dropboxDatastore.png?branch=master)](http://travis-ci.org/dmytroyarmak/Backbone.dropboxDatastore)
 
@@ -62,6 +62,28 @@ window.SomeCollection = Backbone.Collection.extend({
 ```
 
 For more details how Dropbox Datastore API works read tutorial: [Using the Datastore API in JavaScript](https://www.dropbox.com/developers/datastore/tutorial/js)
+
+### Sync collection
+
+By default collections are not listen to changes of datastore that can be made by other application. In this case we don't see changes made in other instance of same application. If you want to make collection sync you should pass collection to syncCollection method of DropboxDatastore object:
+
+```javascript
+window.SomeCollection = Backbone.Collection.extend({
+
+  dropboxDatastore: new Backbone.DropboxDatastore('SomeCollection'),
+
+  initialize: function() {
+    this.dropboxDatastore.syncCollection(this);
+  },
+
+  // ... everything else is normal.
+
+});
+```
+
+If you open multiple tabs with same application and change something all other window's collections updated automatically. You can check it if you open few tabs of [Demo](https://dropboxdatastore.herokuapp.com/).
+
+Under the hood it uses [Dropbox.Datastore.RecordsChanged](https://www.dropbox.com/developers/datastore/docs/js#Dropbox.Datastore.RecordsChanged).
 
 ### Custom Datastore ID
 
