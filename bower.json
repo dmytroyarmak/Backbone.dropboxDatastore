@@ -1,6 +1,6 @@
 {
   "name": "backbone.dropboxDatastore",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "main": "./backbone.dropboxDatastore.js",
   "dependencies": {
     "backbone": "~1.0.0"
