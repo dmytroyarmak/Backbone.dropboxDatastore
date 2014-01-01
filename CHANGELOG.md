@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.0 - Jan 1, 2014
+- add syncCollection method
+- Listen to Dropbox.Datastore.RecordsChanged events to make collection sync
+
 ## 0.4.2 - Jan 1, 2014
 - fix problem with incorrect sync status of datastore
 - fix problem with not unbounded listeners on close
