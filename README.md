@@ -4,8 +4,6 @@
 
 Quite simply a Dropbox Datastore adapter for Backbone. It's a drop-in replacement for Backbone.Sync() to handle saving to a [Dropbox Datastore](https://www.dropbox.com/developers/datastore).
 
-[![Gittip](http://badgr.co/gittip/dmytroyarmak.png)](https://www.gittip.com/dmytroyarmak/)
-
 ## Example Application
 
 There is an implementation of TodoMVC using backbone.dropboxDatastore as storage.
