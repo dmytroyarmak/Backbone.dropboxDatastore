@@ -323,18 +323,14 @@
 
   Backbone.originalSync = Backbone.sync;
 
-  Backbone.getSyncMethod = function(model) {
-    if(model.dropboxDatastore || (model.collection && model.collection.dropboxDatastore)) {
-      return Backbone.DropboxDatastore.sync;
-    } else {
-      return Backbone.originalSync;
-    }
-  };
-
   // Override 'Backbone.sync' to default to dropboxDatastoreSync,
   // the original 'Backbone.sync' is still available in 'Backbone.originalSync'
   Backbone.sync = function(method, model, options) {
-    return Backbone.getSyncMethod(model).call(this, method, model, options);
+    if(model.dropboxDatastore || (model.collection && model.collection.dropboxDatastore)) {
+      return Backbone.DropboxDatastore.sync(method, model, options);
+    } else {
+      return Backbone.originalSync(method, model, options);
+    }
   };
 
   return Backbone.DropboxDatastore;
