@@ -35,7 +35,7 @@ describe('Backbone.DropboxDatastore#_findAllWithTable', function() {
     dropboxDatastore = new Backbone.DropboxDatastore('tableName');
 
     spyOn(Backbone.DropboxDatastore, 'recordToJson').andCallFake(function(record) {
-      switch(record) {
+      switch (record) {
         case 'record1Spy': return 'fields1Mock';
         case 'record2Spy': return 'fields2Mock';
       }

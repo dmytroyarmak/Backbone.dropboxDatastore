@@ -1,8 +1,5 @@
 describe('Backbone.DropboxDatastore', function() {
-
   var dropboxDatastore;
-
-
 
   describe('if datastoreId is passed to options', function() {
     beforeEach(function() {

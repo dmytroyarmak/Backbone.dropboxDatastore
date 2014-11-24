@@ -15,7 +15,8 @@ describe('Backbone.DropboxDatastore.sync', function() {
   });
 
   it('call _callSuccessHandler with response', function() {
-    expect(Backbone.DropboxDatastore._callSuccessHandler).toHaveBeenCalledWith('modelMock', 'optionMock', 'responseMock');
+    expect(Backbone.DropboxDatastore._callSuccessHandler)
+      .toHaveBeenCalledWith('modelMock', 'optionMock', 'responseMock');
   });
 
   it('return promise resolved by response', function() {

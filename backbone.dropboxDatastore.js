@@ -1,11 +1,11 @@
-(function (root, factory) {
+(function(root, factory) {
   'use strict';
 
   if (typeof exports === 'object' && typeof require === 'function') {
     module.exports = factory(require('underscore'), require('backbone'));
   } else if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
-    define(['underscore','backbone'], function(_, Backbone) {
+    define(['underscore', 'backbone'], function(_, Backbone) {
       // Use global variables if the locals are undefined.
       return factory(_ || root._, Backbone || root.Backbone);
     });
@@ -92,7 +92,6 @@
       return this._tablePromise;
     },
 
-
     getStatus: function() {
       if (this._table && this._table._datastore.getSyncStatus().uploading) {
         return 'uploading';
@@ -135,20 +134,20 @@
     },
 
     _findWithTable: function(model, table) {
-        var params = {},
-            record;
-        if (model.isNew()) {
-          throw new Error('Cannot fetch data for model without id');
+      var params = {},
+          record;
+      if (model.isNew()) {
+        throw new Error('Cannot fetch data for model without id');
+      } else {
+        if (model.idAttribute === 'id') {
+          record = table.get(model.id);
         } else {
-          if (model.idAttribute === 'id') {
-            record = table.get(model.id);
-          } else {
-            params[model.idAttribute] = model.id;
-            record = _.first(table.query(params));
-          }
-
-          return record;
+          params[model.idAttribute] = model.id;
+          record = _.first(table.query(params));
         }
+
+        return record;
+      }
     },
 
     _findAllWithTable: function(table) {
@@ -326,7 +325,7 @@
   // Override 'Backbone.sync' to default to dropboxDatastoreSync,
   // the original 'Backbone.sync' is still available in 'Backbone.originalSync'
   Backbone.sync = function(method, model, options) {
-    if(model.dropboxDatastore || (model.collection && model.collection.dropboxDatastore)) {
+    if (model.dropboxDatastore || (model.collection && model.collection.dropboxDatastore)) {
       return Backbone.DropboxDatastore.sync(method, model, options);
     } else {
       return Backbone.originalSync(method, model, options);
